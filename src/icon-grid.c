@@ -207,7 +207,11 @@ static void panel_icon_grid_size_allocate(GtkWidget *widget,
         if (gtk_widget_get_visible(child))
         {
             /* Do necessary operations on the child. */
+#if GTK_CHECK_VERSION(3, 0, 0)
+            gtk_widget_get_preferred_size (child, NULL, &req);
+#else
             gtk_widget_get_child_requisition(child, &req);
+#endif
             icon_grid_element_check_requisition(ig, &req);
             child_allocation.width = MIN(req.width, child_width);
             child_allocation.height = MIN(req.height, child_height);
@@ -298,7 +302,11 @@ static void panel_icon_grid_calculate_size(PanelIconGrid *ig,
         for (ige = ig->children; ige != NULL; ige = ige->next)
             if (gtk_widget_get_visible(ige->data))
             {
+#if GTK_CHECK_VERSION(3, 0, 0)
+                gtk_widget_get_preferred_size(ige->data, NULL, &child_requisition);
+#else
                 gtk_widget_size_request(ige->data, &child_requisition);
+#endif
                 icon_grid_element_check_requisition(ig, &child_requisition);
                 if (row == 0)
                     ig->columns++;
@@ -324,6 +332,14 @@ static void panel_icon_grid_calculate_size(PanelIconGrid *ig,
             ig->rows = visible_children; */
         if (ig->columns > 0)
             requisition->height = (ig->child_height + ig->spacing) * ig->rows - ig->spacing + 2 * border;
+#if GTK_CHECK_VERSION(3, 0, 0)
+        /* The line below fixes a problem under GTK+3 whereby an icon grid which is supposed to have a constrained width,
+         * such as the taskbar, just keeps growing as items are added. I am not 100% sure why this fix works - I think it is
+         * because otherwise the icon grid's width request just gets bigger as items are added, and the bar allocates the requested
+         * space; by resetting the requisition to zero, the widget is only ever given any remaining space and so does not grow
+         * infinitely. This may have side effects which I have not yet discovered... */
+        if (ig->constrain_width) requisition->width = 0;
+#endif
     }
     else
     {
@@ -337,7 +353,11 @@ static void panel_icon_grid_calculate_size(PanelIconGrid *ig,
         for (ige = ig->children; ige != NULL; ige = ige->next)
             if (gtk_widget_get_visible(ige->data))
             {
+#if GTK_CHECK_VERSION(3, 0, 0)
+                gtk_widget_get_preferred_size(ige->data, NULL, &child_requisition);
+#else
                 gtk_widget_size_request(ige->data, &child_requisition);
+#endif
                 icon_grid_element_check_requisition(ig, &child_requisition);
                 if (w > 0)
                 {
@@ -929,11 +949,13 @@ static void panel_icon_grid_realize(GtkWidget *widget)
         gdk_window_set_user_data(ig->event_window, widget);
     }
 
+#if !GTK_CHECK_VERSION(3, 0, 0)
     style = gtk_style_attach(gtk_widget_get_style(widget), window);
     gtk_widget_set_style(widget, style);
 
     if (visible_window)
         gtk_style_set_background(style, window, GTK_STATE_NORMAL);
+#endif
 }
 
 static void panel_icon_grid_unrealize(GtkWidget *widget)
@@ -1195,6 +1217,7 @@ static void panel_icon_grid_class_init(PanelIconGridClass *klass)
 
 static void panel_icon_grid_init(PanelIconGrid *ig)
 {
+    gtk_widget_set_has_window(GTK_WIDGET(ig), FALSE);
     gtk_widget_set_redraw_on_allocate(GTK_WIDGET(ig), FALSE);
 
     ig->orientation = GTK_ORIENTATION_HORIZONTAL;

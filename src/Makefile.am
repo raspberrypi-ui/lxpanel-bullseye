@@ -52,8 +52,12 @@ lxpanel_include_HEADERS = \
 	icon-grid.h \
 	conf.h
 
+if GTK2_ONLY
+GTK2_ONLY_SOURCES =	icon-grid-old.c
+endif
+
 lxpanel_SOURCES = \
-	icon-grid-old.c \
+	$(GTK2_ONLY_SOURCES) \
 	bg.c \
 	gtk-run.c \
 	main.c \

@@ -196,18 +196,18 @@ void plugin_widget_set_background(GtkWidget * w, LXPanel * panel)
             if (gtk_widget_get_realized(w))
             {
                 GdkWindow *window = gtk_widget_get_window(w);
-#if GTK_CHECK_VERSION(3, 0, 0)
-                gdk_window_set_background_pattern(window, NULL);
-#else
+#if !GTK_CHECK_VERSION(3, 0, 0)
                 gdk_window_set_back_pixmap(window, NULL, TRUE);
 #endif
                 if ((p->background) || (p->transparent))
                     /* Reset background for the child, using background of panel */
                     gdk_window_invalidate_rect(window, NULL, TRUE);
+#if !GTK_CHECK_VERSION(3, 0, 0)
                 else
                     /* Set background according to the current GTK style. */
                     gtk_style_set_background(gtk_widget_get_style(w), window,
                                              GTK_STATE_NORMAL);
+#endif
             }
         }
 
@@ -215,9 +215,13 @@ void plugin_widget_set_background(GtkWidget * w, LXPanel * panel)
         if (GTK_IS_SOCKET(w))
         {
             gtk_widget_hide(w);
+#if !GTK_CHECK_VERSION(3, 0, 0)
             gdk_window_process_all_updates();
+#endif
             gtk_widget_show(w);
+#if !GTK_CHECK_VERSION(3, 0, 0)
             gdk_window_process_all_updates();
+#endif
         }
 
         /* Recursively process all children of a container. */
@@ -233,8 +237,17 @@ static gboolean lxpanel_plugin_button_press_event(GtkWidget *plugin, GdkEventBut
     if (event->button == 3 && /* right button */
         (event->state & gtk_accelerator_get_default_mod_mask()) == 0) /* no key */
     {
+#ifdef ENABLE_NLS
+		// this message comes via the plugin, which will have switched to its own text domain, so 
+		// we need to switch back here...
+		textdomain ( GETTEXT_PACKAGE );
+#endif
         GtkMenu* popup = (GtkMenu*)lxpanel_get_plugin_menu(panel, plugin, FALSE);
+#if GTK_CHECK_VERSION(3, 0, 0)
+        gtk_menu_popup_at_pointer (popup, (GdkEvent *) event);
+#else
         gtk_menu_popup(popup, NULL, NULL, NULL, NULL, event->button, event->time);
+#endif
         return TRUE;
     }
     return FALSE;
@@ -253,7 +266,11 @@ void lxpanel_plugin_popup_set_position_helper(LXPanel * p, GtkWidget * near, Gtk
     GtkAllocation allocation;
     GtkAllocation popup_req;
     GdkScreen *screen = NULL;
+#if GTK_CHECK_VERSION(3, 0, 0)
+    GdkMonitor *monitor;
+#else
     gint monitor;
+#endif
 
     /* Get the allocation of the popup menu. */
     gtk_widget_realize(popup);
@@ -262,7 +279,9 @@ void lxpanel_plugin_popup_set_position_helper(LXPanel * p, GtkWidget * near, Gtk
     {
         GdkRectangle extents;
         /* FIXME: can we wait somehow for WM drawing decorations? */
+#if !GTK_CHECK_VERSION(3, 0, 0)
         gdk_window_process_all_updates();
+#endif
         gdk_window_get_frame_extents(gtk_widget_get_window(popup), &extents);
         popup_req.width = extents.width;
         popup_req.height = extents.height;
@@ -294,10 +313,11 @@ void lxpanel_plugin_popup_set_position_helper(LXPanel * p, GtkWidget * near, Gtk
     else
         /* panel as a GtkWindow always has a screen */
         screen = gtk_widget_get_screen(GTK_WIDGET(p));
-    monitor = gdk_screen_get_monitor_at_point(screen, x, y);
-#if GTK_CHECK_VERSION(3, 4, 0)
-    gdk_screen_get_monitor_workarea(screen, monitor, &allocation);
+#if GTK_CHECK_VERSION(3, 0, 0)
+    monitor = gdk_display_get_monitor_at_point (gdk_screen_get_display (screen), x, y);
+    gdk_monitor_get_workarea (monitor, &allocation);
 #else
+    monitor = gdk_screen_get_monitor_at_point(screen, x, y);
     gdk_screen_get_monitor_geometry(screen, monitor, &allocation);
 #endif
     x = CLAMP(x, allocation.x, allocation.x + allocation.width - popup_req.width);
@@ -580,6 +600,7 @@ GtkWidget *lxpanel_add_plugin(LXPanel *p, const char *name, config_setting_t *cf
     gtk_box_pack_start(GTK_BOX(p->priv->box), widget, expand, TRUE, padding);
     if (at >= 0)
         gtk_box_reorder_child(GTK_BOX(p->priv->box), widget, at);
+    if (GTK_IS_CONTAINER (widget))
     gtk_container_set_border_width(GTK_CONTAINER(widget), border);
     g_signal_connect(widget, "size-allocate", G_CALLBACK(on_size_allocate), p);
     gtk_widget_show(widget);
@@ -594,4 +615,89 @@ GtkWidget *lxpanel_add_plugin(LXPanel *p, const char *name, config_setting_t *cf
 GHashTable *lxpanel_get_all_types(void)
 {
     return _all_types;
+}
+
+/* sets the supplied image widget to the named icon at the current taskbar size */
+void lxpanel_plugin_set_taskbar_icon (LXPanel *p, GtkWidget *image, const char *icon)
+{
+    GdkPixbuf *pixbuf;
+
+    pixbuf = gtk_icon_theme_load_icon (panel_get_icon_theme (p), icon,
+        panel_get_safe_icon_size (p), GTK_ICON_LOOKUP_FORCE_SIZE, NULL);
+    if (pixbuf)
+    {
+        gtk_image_set_from_pixbuf (GTK_IMAGE (image), pixbuf);
+        g_object_unref (pixbuf);
+    }
+}
+
+void lxpanel_plugin_set_menu_icon (LXPanel *p, GtkWidget *image, const char *icon)
+{
+    GdkPixbuf *pixbuf = NULL;
+
+    if (icon)
+        pixbuf = gtk_icon_theme_load_icon (panel_get_icon_theme (p), icon,
+            panel_get_safe_icon_size (p) > 32 ? 24 : 16, GTK_ICON_LOOKUP_FORCE_SIZE, NULL);
+    if (!pixbuf)
+    {
+        pixbuf = gdk_pixbuf_new (GDK_COLORSPACE_RGB, TRUE, 8, panel_get_safe_icon_size (p) > 32 ? 24 : 16, 
+            panel_get_safe_icon_size (p) > 32 ? 24 : 16);
+        gdk_pixbuf_fill (pixbuf, 0xffffff00);
+    }
+    gtk_image_set_from_pixbuf (GTK_IMAGE (image), pixbuf);
+    g_object_unref (pixbuf);
+}
+
+GtkWidget *lxpanel_plugin_new_menu_item (LXPanel *p, const char *text, int maxlen, const char *iconname)
+{
+    GtkWidget *item = gtk_menu_item_new ();
+    gtk_widget_set_name (item, "panelmenuitem");
+    GtkWidget *box = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, MENU_ICON_SPACE);
+    GtkWidget *label = gtk_label_new (text);
+    GtkWidget *icon = gtk_image_new ();
+    lxpanel_plugin_set_menu_icon (p, icon, iconname);
+
+    if (maxlen)
+    {
+        gtk_label_set_max_width_chars (GTK_LABEL (label), maxlen);
+        gtk_label_set_ellipsize (GTK_LABEL (label), PANGO_ELLIPSIZE_END);
+    }
+
+    gtk_container_add (GTK_CONTAINER (item), box);
+    gtk_container_add (GTK_CONTAINER (box), icon);
+    gtk_container_add (GTK_CONTAINER (box), label);
+
+    return item;
+}
+
+void lxpanel_plugin_update_menu_icon (GtkWidget *item, GtkWidget *image)
+{
+    GtkWidget *box = gtk_bin_get_child (GTK_BIN (item));
+    GList *children = gtk_container_get_children (GTK_CONTAINER (box));
+    GtkWidget *img = (GtkWidget *) children->data;
+    gtk_container_remove (GTK_CONTAINER (box), img);
+    gtk_box_pack_start (GTK_BOX (box), image, FALSE, FALSE, 0);
+    gtk_box_reorder_child (GTK_BOX (box), image, 0);
+}
+
+void lxpanel_plugin_append_menu_icon (GtkWidget *item, GtkWidget *image)
+{
+    GtkWidget *box = gtk_bin_get_child (GTK_BIN (item));
+    gtk_box_pack_start (GTK_BOX (box), image, FALSE, FALSE, 0);
+}
+
+const char *lxpanel_plugin_get_menu_label (GtkWidget *item)
+{
+    if (!GTK_IS_BIN (item)) return "";
+    GtkWidget *box = gtk_bin_get_child (GTK_BIN (item));
+    if (!box) return "";
+    GList *children = gtk_container_get_children (GTK_CONTAINER (box));
+    if (!children) return "";
+    while (children->data)
+    {
+        if (GTK_IS_LABEL ((GtkWidget *) children->data))
+            return gtk_label_get_text (GTK_LABEL ((GtkWidget *) children->data));
+        children = children->next;
+    }
+    return "";
 }

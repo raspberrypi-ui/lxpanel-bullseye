@@ -36,6 +36,10 @@ G_BEGIN_DECLS
 
 #define FM_MODULE_lxpanel_gtk_VERSION 1 /* version of this API */
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+#define MENU_ICON_SPACE 6
+#endif
+
 /**
  * LXPanelPluginInit:
  * @init: (allow-none): callback on lxpanel start
@@ -267,7 +271,9 @@ typedef enum {
     CONF_TYPE_FILE_ENTRY,
     CONF_TYPE_DIRECTORY_ENTRY,
     CONF_TYPE_TRIM,
-    CONF_TYPE_EXTERNAL
+    CONF_TYPE_EXTERNAL,
+    CONF_TYPE_COLOR,
+    CONF_TYPE_RBUTTON
 } PluginConfType;
 
 /**
@@ -378,6 +384,13 @@ extern guint panel_config_click_parse(const char *keystring, GdkModifierType *mo
 /* Add/remove plugin to/from panel */
 GtkWidget *lxpanel_add_plugin(LXPanel *p, const char *name, config_setting_t *cfg, gint at);
 void lxpanel_remove_plugin(LXPanel *p, GtkWidget *plugin);
+
+extern void lxpanel_plugin_set_taskbar_icon (LXPanel *p, GtkWidget *image, const char *icon);
+extern void lxpanel_plugin_set_menu_icon (LXPanel *p, GtkWidget *image, const char *icon);
+extern GtkWidget *lxpanel_plugin_new_menu_item (LXPanel *p, const char *text, int maxlen, const char *iconname);
+extern void lxpanel_plugin_update_menu_icon (GtkWidget *item, GtkWidget *image);
+extern void lxpanel_plugin_append_menu_icon (GtkWidget *item, GtkWidget *image);
+extern const char *lxpanel_plugin_get_menu_label (GtkWidget *item);
 
 G_END_DECLS
 

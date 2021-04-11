@@ -42,7 +42,7 @@ typedef struct _LaunchButtonClass           LaunchButtonClass;
 
 struct _LaunchButtonClass
 {
-    GtkEventBoxClass parent_class;
+    GtkButtonClass parent_class;
 };
 
 /* creates new button */
@@ -53,6 +53,7 @@ FmIcon *launch_button_get_icon(LaunchButton *btn);
 config_setting_t *launch_button_get_settings(LaunchButton *btn);
 void launch_button_set_settings(LaunchButton *btn, config_setting_t *settings);
 gboolean launch_button_wait_load(LaunchButton *btn);
+void launch_button_update_icon (LaunchButton *btn, int size);
 
 G_END_DECLS
 

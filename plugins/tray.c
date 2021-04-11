@@ -219,7 +219,9 @@ static void balloon_message_display(TrayPlugin * tr, BalloonMessage * msg)
     tr->balloon_message_popup = gtk_window_new(GTK_WINDOW_POPUP);
     GtkWidget * balloon_text = gtk_label_new(msg->string);
     gtk_label_set_line_wrap(GTK_LABEL(balloon_text), TRUE);
+#if !GTK_CHECK_VERSION(3, 0, 0)
     gtk_misc_set_alignment(GTK_MISC(balloon_text), 0.5, 0.5);
+#endif
     gtk_container_add(GTK_CONTAINER(tr->balloon_message_popup), balloon_text);
     gtk_widget_show(balloon_text);
     gtk_container_set_border_width(GTK_CONTAINER(tr->balloon_message_popup), 4);
@@ -567,7 +569,11 @@ static GtkWidget *tray_constructor(LXPanel *panel, config_setting_t *settings)
     GdkDisplay * display = gdk_screen_get_display(screen);
 
     /* Create the selection atom.  This has the screen number in it, so cannot be done ahead of time. */
+#if GTK_CHECK_VERSION(3, 0, 0)
+    char * selection_atom_name = g_strdup_printf("_NET_SYSTEM_TRAY_S0");
+#else
     char * selection_atom_name = g_strdup_printf("_NET_SYSTEM_TRAY_S%d", gdk_screen_get_number(screen));
+#endif
     Atom selection_atom = gdk_x11_get_xatom_by_name_for_display(display, selection_atom_name);
     GdkAtom gdk_selection_atom = gdk_atom_intern(selection_atom_name, FALSE);
     g_free(selection_atom_name);
@@ -631,7 +637,7 @@ static GtkWidget *tray_constructor(LXPanel *panel, config_setting_t *settings)
     /* Add GDK event filter. */
     gdk_window_add_filter(NULL, (GdkFilterFunc) tray_event_filter, tr);
     /* Reference the window since it is never added to a container. */
-    tr->invisible = g_object_ref_sink(G_OBJECT(invisible));
+    tr->invisible = invisible;
     tr->invisible_window = GDK_WINDOW_XID(gtk_widget_get_window(invisible));
 
     /* Allocate top level widget and set into Plugin widget pointer. */

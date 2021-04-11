@@ -42,6 +42,8 @@ static const char usage[] =
         "run\t\t\tshow run dialog\n"
         "config\t\t\tshow configuration dialog\n"
         "restart\t\t\trestart lxpanel\n"
+        "refresh\t\trefresh lxpanel\n"
+        "move\t\tmove panel to new monitor\n"
         "exit\t\t\texit lxpanel\n"
         "command <plugin> <cmd>\tsend a command to a plugin\n\n";
 
@@ -59,6 +61,10 @@ static int get_cmd( const char* cmd )
         return LXPANEL_CMD_EXIT;
     else if( ! strcmp( cmd, "command") )
         return LXPANEL_CMD_COMMAND;
+    else if( ! strcmp( cmd, "refresh") )
+        return LXPANEL_CMD_REFRESH;
+    else if( ! strcmp( cmd, "move") )
+        return LXPANEL_CMD_MOVE;
     return -1;
 }
 

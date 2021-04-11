@@ -94,8 +94,13 @@ struct _Panel {
     int alpha;
     guint32 tintcolor;
     guint32 fontcolor;
+#if GTK_CHECK_VERSION(3, 0, 0)
+    GdkRGBA gtintcolor;
+    GdkRGBA gfontcolor;
+#else
     GdkColor gtintcolor;
     GdkColor gfontcolor;
+#endif
 
     int ax, ay, aw, ah;  /* prefferd allocation of a panel */
     int cx, cy, cw, ch;  /* current allocation (as reported by configure event) allocation */
@@ -120,6 +125,7 @@ struct _Panel {
     guint transparent : 1;
     guint background : 1;
     guint spacing;
+    guint point_at_menu : 1;
 
     guint autohide : 1;
     guint visible : 1;
@@ -248,6 +254,7 @@ extern GQuark lxpanel_plugin_qconf; /* access to congig_setting_t data */
 gboolean _class_is_present(const LXPanelPluginInit *init);
 
 LXPanel* panel_new(const char* config_file, const char* config_name);
+LXPanel* panel_new_mon_fb (const char* config_file, const char* config_name);
 
 void _panel_show_config_dialog(LXPanel *panel, GtkWidget *p, GtkWidget *dlg);
 

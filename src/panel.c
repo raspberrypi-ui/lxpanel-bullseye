@@ -86,6 +86,130 @@ enum
 
 static guint signals[N_SIGNALS];
 
+/* Monitor number remapping
+ * ========================
+ *
+ * There are two monitor numbering systems used in the code.
+ *
+ * The first is the numbering used by GDK. In this, monitors are numbered
+ * as they appear from left to right within the current GdkDisplay and
+ * GdkScreen. If xrandr or similar is used to rearrange the monitors, these
+ * numbers change.
+ *
+ * The second system is that used by X, and tools like xrandr. In this,
+ * the primary monitor is always 0, with non-primary monitors numbered from
+ * 1 upwards.
+ *
+ * xrandr --listmonitors lists monitors with their X reference number
+ * (with the primary monitor always as 0) - at the end of each line of the
+ * results of this command, the x and y offsets within the screen are shown
+ * for each monitor, so it is possible to cross-reference the two systems.
+ *
+ * Within lxpanel and pcmanfm, whenever a monitor number is given in the data
+ * file or data structure, it is an X reference number - 0 is always the
+ * primary monitor. (Otherwise, rearranging monitors makes these references
+ * change, and desktop, panel etc change when rearranging. Which is bad...)
+ *
+ * Whenever a GDK screen function is called on an internal monitor reference,
+ * the gdk_mon_num function must be used to wrap the internal reference before
+ * passing it to GDK.
+ *
+ * Note that identical functions are used in lxpanel and pcmanfm.
+ */
+
+int gdk_mon_num (int x_mon_num)
+{
+    GdkDisplay *disp = gdk_display_get_default ();
+#if GTK_CHECK_VERSION(3, 0, 0)
+    int prim = -1;
+    GdkMonitor *mon = gdk_display_get_primary_monitor (disp);
+    for (int i = 0; i < gdk_display_get_n_monitors (disp); i++)
+        if (gdk_display_get_monitor (disp, i) == mon) prim = i;
+#else
+    GdkScreen *scr = gdk_display_get_screen (disp, 0);
+    int prim = gdk_screen_get_primary_monitor (scr);
+#endif
+
+    /* monitor 0 is always the primary monitor */
+    if (x_mon_num == 0) return prim;
+
+    /* this will currently only return the secondary monitor, if there is one */
+    /* for some future world, this needs to compare co-ords against those from xrandr */
+#if GTK_CHECK_VERSION(3, 0, 0)
+    for (int i = 0; i < gdk_display_get_n_monitors (disp); i++)
+#else
+    for (int i = 0; i < gdk_screen_get_n_monitors (scr); i++)
+#endif
+    {
+        if (i != prim) return i;
+    }
+
+    /* ... or -1 if there is only one monitor */
+    return -1;
+}
+
+int x_mon_num (int gdk_mon_num)
+{
+    GdkDisplay *disp = gdk_display_get_default ();
+#if GTK_CHECK_VERSION(3, 0, 0)
+    int prim = -1;
+    GdkMonitor *mon = gdk_display_get_primary_monitor (disp);
+    for (int i = 0; i < gdk_display_get_n_monitors (disp); i++)
+        if (gdk_display_get_monitor (disp, i) == mon) prim = i;
+#else
+    GdkScreen *scr = gdk_display_get_screen (disp, 0);
+    int prim = gdk_screen_get_primary_monitor (scr);
+#endif
+
+    if (gdk_mon_num == prim) return 0;
+
+#if GTK_CHECK_VERSION(3, 0, 0)
+    if (gdk_display_get_n_monitors (disp) > 1) return 1;
+#else
+    if (gdk_screen_get_n_monitors (scr) > 1) return 1;
+#endif
+    else return -1;
+}
+
+void warp_pointer (Panel *p)
+{
+    if (p->point_at_menu && p->box != NULL)
+    {
+        // loop through all plugins to find the menu
+        GList *plugins = gtk_container_get_children (GTK_CONTAINER (p->box));
+        for (GList *l = plugins; l != NULL; l = l->next)
+        {
+            if (!g_strcmp0 ("Menu", PLUGIN_CLASS (l->data)->name))
+            {
+                int xpos, ypos;
+                GdkRectangle alloc;
+
+                // get the position of the menu window (the bar) and the menu button allocation
+                gdk_window_get_origin (gtk_widget_get_window (l->data), &xpos, &ypos);
+                gtk_widget_get_allocation (l->data, &alloc);
+
+                // calculate the centre of the menu button in screen coords
+                xpos += alloc.x + (alloc.width / 2);
+                ypos += alloc.y + (alloc.height / 2);
+
+                int x, y;
+                unsigned int w, h, d, b;
+                Window root;
+
+                // move the mouse pointer to the centre of the button
+                Display *xdisplay = XOpenDisplay (NULL);
+                XGetGeometry (xdisplay, DefaultRootWindow (xdisplay), &root, &x, &y, &w, &h, &b, &d);
+                XWarpPointer (xdisplay, 0, root, 0, 0, 0, 0, xpos, ypos);
+                XCloseDisplay (xdisplay);
+            }
+        }
+        g_list_free (plugins);
+    }
+
+    // clear the flag in RAM so we only do this once per run
+    p->point_at_menu = 0;
+}
+
 G_DEFINE_TYPE(PanelToplevel, lxpanel, GTK_TYPE_WINDOW);
 
 static void lxpanel_finalize(GObject *object)
@@ -129,7 +253,11 @@ static void panel_stop_gui(LXPanel *self)
     {
         gtk_window_group_remove_window(win_grp, GTK_WINDOW(self));
         xdisplay = GDK_DISPLAY_XDISPLAY(gdk_display_get_default());
+#if GTK_CHECK_VERSION(3, 0, 0)
+        gdk_display_flush (gdk_display_get_default ());
+#else
         gdk_flush();
+#endif
         XFlush(xdisplay);
         XSync(xdisplay, True);
         p->initialized = FALSE;
@@ -251,7 +379,11 @@ static void lxpanel_size_request(GtkWidget *widget, GtkRequisition *req)
     if (!p->visible)
         /* When the panel is in invisible state, the content box also got hidden, thus always
          * report 0 size.  Ask the content box instead for its size. */
+#if GTK_CHECK_VERSION(3, 0, 0)
+        gtk_widget_get_preferred_size(p->box, NULL, req);
+#else
         gtk_widget_size_request(p->box, req);
+#endif
 
     rect.width = req->width;
     rect.height = req->height;
@@ -325,6 +457,10 @@ static void lxpanel_size_allocate(GtkWidget *widget, GtkAllocation *a)
     p->ax = rect.x;
     p->ay = rect.y;
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+    if (a->width != p->aw || a->height != p->ah) gtk_widget_set_size_request (widget, p->aw, p->ah);
+#endif
+
     if (rect.width != p->aw || rect.height != p->ah || x != p->ax || y != p->ay)
     {
         p->aw = rect.width;
@@ -375,7 +511,11 @@ static gboolean lxpanel_button_press(GtkWidget *widget, GdkEventButton *event)
     if (event->button == 3) /* right button */
     {
         GtkMenu* popup = (GtkMenu*) lxpanel_get_plugin_menu(panel, NULL, FALSE);
+#if GTK_CHECK_VERSION(3, 0, 0)
+        gtk_menu_popup_at_widget (popup, widget, GDK_GRAVITY_NORTH_WEST, GDK_GRAVITY_NORTH_WEST, (GdkEvent *) event);
+#else
         gtk_menu_popup(popup, NULL, NULL, NULL, NULL, event->button, event->time);
+#endif
         return TRUE;
     }
     else if (event->button == 2) /* middle button */
@@ -464,7 +604,11 @@ static void lxpanel_init(PanelToplevel *self)
     p->height_when_hidden = 2;
     p->transparent = 0;
     p->alpha = 255;
+#if GTK_CHECK_VERSION(3, 0, 0)
+    gdk_rgba_parse(&p->gtintcolor, "white");
+#else
     gdk_color_parse("white", &p->gtintcolor);
+#endif
     p->tintcolor = gcolor2rgb24(&p->gtintcolor);
     p->usefontcolor = 0;
     p->fontcolor = 0x00000000;
@@ -474,7 +618,10 @@ static void lxpanel_init(PanelToplevel *self)
     p->icon_size = PANEL_ICON_SIZE;
     p->icon_theme = gtk_icon_theme_get_default();
     p->config = config_new();
+#if !GTK_CHECK_VERSION(3, 0, 0)
     p->defstyle = gtk_widget_get_default_style();
+#endif
+    p->point_at_menu = 0;
 }
 
 /* Allocate and initialize new Panel structure. */
@@ -563,10 +710,25 @@ gboolean _panel_edge_can_strut(LXPanel *panel, int edge, gint monitor, gulong *s
     }
 
     screen = gtk_widget_get_screen(GTK_WIDGET(panel));
+#if GTK_CHECK_VERSION(3, 0, 0)
+    n = gdk_display_get_n_monitors (gtk_widget_get_display (GTK_WIDGET (panel)));
+#else
     n = gdk_screen_get_n_monitors(screen);
+#endif
     if (monitor >= n) /* hidden now */
         return FALSE;
-    gdk_screen_get_monitor_geometry(screen, monitor, &rect);
+
+    /* the tests below are all based on the idea that a strut can only be attached to a monitor
+     * edge which is adjacent to a screen edge, and with size scaled to fill the entirety of the gap
+     * between screen and monitor. This restriction seems not to be required any more... */
+    if (G_LIKELY(size))
+        *size = s;
+    return TRUE;
+#if GTK_CHECK_VERSION(3, 0, 0)
+    gdk_monitor_get_geometry (gdk_display_get_monitor (gdk_screen_get_display (screen), gdk_mon_num (monitor)), &rect);
+#else
+    gdk_screen_get_monitor_geometry(screen, gdk_mon_num (monitor), &rect);
+#endif
     switch (edge)
     {
         case EDGE_LEFT:
@@ -576,7 +738,11 @@ gboolean _panel_edge_can_strut(LXPanel *panel, int edge, gint monitor, gulong *s
             break;
         case EDGE_RIGHT:
             rect.x += rect.width;
+#if GTK_CHECK_VERSION(3, 0, 0)
+            rect.width = screen_width(screen) - rect.x;
+#else
             rect.width = gdk_screen_get_width(screen) - rect.x;
+#endif
             s += rect.width;
             break;
         case EDGE_TOP:
@@ -586,7 +752,11 @@ gboolean _panel_edge_can_strut(LXPanel *panel, int edge, gint monitor, gulong *s
             break;
         case EDGE_BOTTOM:
             rect.y += rect.height;
+#if GTK_CHECK_VERSION(3, 0, 0)
+            rect.height = screen_height(screen) - rect.y;
+#else
             rect.height = gdk_screen_get_height(screen) - rect.y;
+#endif
             s += rect.height;
             break;
         default: ;
@@ -598,7 +768,11 @@ gboolean _panel_edge_can_strut(LXPanel *panel, int edge, gint monitor, gulong *s
         {
             if (i == monitor)
                 continue;
-            gdk_screen_get_monitor_geometry(screen, i, &rect2);
+#if GTK_CHECK_VERSION(3, 0, 0)
+            gdk_monitor_get_geometry (gdk_display_get_monitor (gdk_screen_get_display (screen), gdk_mon_num (i)), &rect2);
+#else
+            gdk_screen_get_monitor_geometry(screen, gdk_mon_num (i), &rect2);
+#endif
             if (gdk_rectangle_intersect(&rect, &rect2, NULL))
                 /* that monitor lies over the edge */
                 return FALSE;
@@ -824,8 +998,14 @@ static void _panel_determine_background_pixmap(LXPanel * panel)
         else
         {
             /* Either color is set or image is invalid, fill the background */
+#if GTK_CHECK_VERSION(3, 0, 0)
+            p->gtintcolor.alpha = p->transparent ? (((double) p->alpha) / 256.0) : 1.0;
+            gdk_cairo_set_source_rgba(cr, &p->gtintcolor);
+            cairo_paint (cr);
+#else
             gdk_cairo_set_source_color(cr, &p->gtintcolor);
             cairo_paint_with_alpha(cr, p->transparent ? (double)p->alpha/255 : 1.0);
+#endif
         }
         cairo_destroy(cr);
     }
@@ -833,11 +1013,7 @@ static void _panel_determine_background_pixmap(LXPanel * panel)
     if (p->surface != NULL)
     {
         gtk_widget_set_app_paintable(widget, TRUE);
-#if GTK_CHECK_VERSION(3, 0, 0)
-        pattern = cairo_pattern_create_for_surface(p->surface);
-        gdk_window_set_background_pattern(window, pattern);
-        cairo_pattern_destroy(pattern);
-#else
+#if !GTK_CHECK_VERSION(3, 0, 0)
         pixmap = gdk_pixmap_new(window, p->aw, p->ah, -1);
         cr = gdk_cairo_create(pixmap);
         cairo_set_source_surface(cr, p->surface, 0, 0);
@@ -861,9 +1037,7 @@ void panel_determine_background_pixmap(Panel * panel, GtkWidget * widget, GdkWin
         /* Backward compatibility:
            reset background for the child, using background of panel */
         gtk_widget_set_app_paintable(widget, (panel->background || panel->transparent));
-#if GTK_CHECK_VERSION(3, 0, 0)
-        gdk_window_set_background_pattern(window, NULL);
-#else
+#if !GTK_CHECK_VERSION(3, 0, 0)
         gdk_window_set_back_pixmap(window, NULL, TRUE);
 #endif
     }
@@ -949,7 +1123,11 @@ mouse_watch(LXPanel *panel)
         return FALSE;
 
     ENTER;
+#if GTK_CHECK_VERSION(3, 0, 0)
+    gdk_device_get_position (gdk_seat_get_pointer (gdk_display_get_default_seat (gdk_display_get_default ())), NULL, &x, &y);
+#else
     gdk_display_get_pointer(gdk_display_get_default(), NULL, &x, &y, NULL);
+#endif
 
 /*  Reduce sensitivity area
     p->ah_far = ((x < p->cx - GAP) || (x > p->cx + p->cw + GAP)
@@ -1254,15 +1432,28 @@ static void panel_popupmenu_create_panel( GtkMenuItem* item, LXPanel* panel )
 
     /* Allocate the edge. */
     g_assert(screen);
+#if GTK_CHECK_VERSION(3, 0, 0)
+    monitors = gdk_display_get_n_monitors (gtk_widget_get_display (GTK_WIDGET (panel)));
+#else
     monitors = gdk_screen_get_n_monitors(screen);
+#endif
     /* try to allocate edge on current monitor first */
     m = panel->priv->monitor;
     if (m < 0)
     {
         /* panel is spanned over the screen, guess from pointer now */
         gint x, y;
+#if GTK_CHECK_VERSION(3, 0, 0)
+        gdk_device_get_position (gdk_seat_get_pointer (gdk_display_get_default_seat (gdk_display_get_default ())), NULL, &x, &y);
+        int n = -1;
+        GdkMonitor *mon = gdk_display_get_monitor_at_point (gdk_screen_get_display (screen), x, y);
+        for (int i = 0; i < gdk_display_get_n_monitors (gdk_screen_get_display (screen)); i++)
+            if (gdk_display_get_monitor (gdk_screen_get_display (screen), i) == mon) n = i;
+        m = x_mon_num (n);
+#else
         gdk_display_get_pointer(gdk_display_get_default(), NULL, &x, &y, NULL);
-        m = gdk_screen_get_monitor_at_point(screen, x, y);
+        m = x_mon_num (gdk_screen_get_monitor_at_point(screen, x, y));
+#endif
     }
     for (e = 1; e < 5; ++e)
     {
@@ -1417,12 +1608,19 @@ GtkMenu* lxpanel_get_plugin_menu( LXPanel* panel, GtkWidget* plugin, gboolean us
     {
         init = PLUGIN_CLASS(plugin);
         /* create single item - plugin instance settings */
+#if GTK_CHECK_VERSION(3, 0, 0)
+        tmp = g_strdup_printf(_("%s Settings"),
+                              g_dgettext(init->gettext_package, init->name));
+        menu_item = gtk_menu_item_new_with_label( tmp );
+        g_free( tmp );
+#else
         img = gtk_image_new_from_stock( GTK_STOCK_PREFERENCES, GTK_ICON_SIZE_MENU );
-        tmp = g_strdup_printf(_("\"%s\" Settings"),
+        tmp = g_strdup_printf(_("%s Settings"),
                               g_dgettext(init->gettext_package, init->name));
         menu_item = gtk_image_menu_item_new_with_label( tmp );
         g_free( tmp );
         gtk_image_menu_item_set_image( (GtkImageMenuItem*)menu_item, img );
+#endif
         gtk_menu_shell_prepend(GTK_MENU_SHELL(ret), menu_item);
         if( init->config )
             g_signal_connect( menu_item, "activate", G_CALLBACK(panel_popupmenu_config_plugin), plugin );
@@ -1438,19 +1636,29 @@ GtkMenu* lxpanel_get_plugin_menu( LXPanel* panel, GtkWidget* plugin, gboolean us
     if (use_sub_menu)
         menu = GTK_MENU(gtk_menu_new());
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+    menu_item = gtk_menu_item_new_with_label(_("Add / Remove Panel Items"));
+#else
     img = gtk_image_new_from_stock( GTK_STOCK_EDIT, GTK_ICON_SIZE_MENU );
     menu_item = gtk_image_menu_item_new_with_label(_("Add / Remove Panel Items"));
     gtk_image_menu_item_set_image( (GtkImageMenuItem*)menu_item, img );
+#endif
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_item);
     g_signal_connect( menu_item, "activate", G_CALLBACK(panel_popupmenu_add_item), panel );
 
     if( plugin )
     {
+#if GTK_CHECK_VERSION(3, 0, 0)
+        tmp = g_strdup_printf( _("Remove \"%s\" From Panel"), _(init->name) );
+        menu_item = gtk_menu_item_new_with_label( tmp );
+        g_free( tmp );
+#else
         img = gtk_image_new_from_stock( GTK_STOCK_REMOVE, GTK_ICON_SIZE_MENU );
         tmp = g_strdup_printf( _("Remove \"%s\" From Panel"), _(init->name) );
         menu_item = gtk_image_menu_item_new_with_label( tmp );
         g_free( tmp );
         gtk_image_menu_item_set_image( (GtkImageMenuItem*)menu_item, img );
+#endif
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_item);
         g_signal_connect( menu_item, "activate", G_CALLBACK(panel_popupmenu_remove_item), plugin );
     }
@@ -1458,21 +1666,33 @@ GtkMenu* lxpanel_get_plugin_menu( LXPanel* panel, GtkWidget* plugin, gboolean us
     menu_item = gtk_separator_menu_item_new();
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_item);
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+    menu_item = gtk_menu_item_new_with_label(_("Panel Settings"));
+#else
     img = gtk_image_new_from_stock( GTK_STOCK_PREFERENCES, GTK_ICON_SIZE_MENU );
     menu_item = gtk_image_menu_item_new_with_label(_("Panel Settings"));
     gtk_image_menu_item_set_image( (GtkImageMenuItem*)menu_item, img );
+#endif
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_item);
     g_signal_connect(G_OBJECT(menu_item), "activate", G_CALLBACK(panel_popupmenu_configure), panel );
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+    menu_item = gtk_menu_item_new_with_label(_("Create New Panel"));
+#else
     img = gtk_image_new_from_stock( GTK_STOCK_NEW, GTK_ICON_SIZE_MENU );
     menu_item = gtk_image_menu_item_new_with_label(_("Create New Panel"));
     gtk_image_menu_item_set_image( (GtkImageMenuItem*)menu_item, img );
+#endif
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_item);
     g_signal_connect( menu_item, "activate", G_CALLBACK(panel_popupmenu_create_panel), panel );
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+    menu_item = gtk_menu_item_new_with_label(_("Delete This Panel"));
+#else
     img = gtk_image_new_from_stock( GTK_STOCK_DELETE, GTK_ICON_SIZE_MENU );
     menu_item = gtk_image_menu_item_new_with_label(_("Delete This Panel"));
     gtk_image_menu_item_set_image( (GtkImageMenuItem*)menu_item, img );
+#endif
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_item);
     g_signal_connect( menu_item, "activate", G_CALLBACK(panel_popupmenu_delete_panel), panel );
     if( ! all_panels->next )    /* if this is the only panel */
@@ -1481,15 +1701,23 @@ GtkMenu* lxpanel_get_plugin_menu( LXPanel* panel, GtkWidget* plugin, gboolean us
     menu_item = gtk_separator_menu_item_new();
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_item);
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+    menu_item = gtk_menu_item_new_with_label(_("About"));
+#else
     img = gtk_image_new_from_stock( GTK_STOCK_ABOUT, GTK_ICON_SIZE_MENU );
     menu_item = gtk_image_menu_item_new_with_label(_("About"));
     gtk_image_menu_item_set_image( (GtkImageMenuItem*)menu_item, img );
+#endif
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_item);
     g_signal_connect( menu_item, "activate", G_CALLBACK(panel_popupmenu_about), panel->priv );
 
     if( use_sub_menu )
     {
+#if GTK_CHECK_VERSION(3, 0, 0)
+        menu_item = gtk_menu_item_new_with_label(_("Panel"));
+#else
         menu_item = gtk_image_menu_item_new_with_label(_("Panel"));
+#endif
         gtk_menu_shell_append(GTK_MENU_SHELL(ret), menu_item);
         gtk_menu_item_set_submenu(GTK_MENU_ITEM(menu_item), GTK_WIDGET(menu) );
     }
@@ -1624,7 +1852,9 @@ panel_start_gui(LXPanel *panel, config_setting_t *list)
     p->ax = p->ay = p->aw = p->ah = 0;
 
     p->display = gdk_display_get_default();
+#if !GTK_CHECK_VERSION(3, 0, 0)
     gtk_window_set_wmclass(GTK_WINDOW(panel), "panel", "lxpanel");
+#endif
 
     if (G_UNLIKELY(win_grp == NULL))
     {
@@ -1724,9 +1954,15 @@ void panel_adjust_geometry_terminology(Panel * p)
 
 /* Draw text into a label, with the user preference color and optionally bold. */
 static
+#if GTK_CHECK_VERSION(3, 0, 0)
+void panel_draw_label_text_with_color(Panel * p, GtkWidget * label, const char * text,
+                           gboolean bold, float custom_size_factor,
+                           gboolean custom_color, GdkRGBA *gdkcolor)
+#else
 void panel_draw_label_text_with_color(Panel * p, GtkWidget * label, const char * text,
                            gboolean bold, float custom_size_factor,
                            gboolean custom_color, GdkColor *gdkcolor)
+#endif
 {
     if (text == NULL)
     {
@@ -1741,8 +1977,16 @@ void panel_draw_label_text_with_color(Panel * p, GtkWidget * label, const char *
         font_desc = p->fontsize;
     else
     {
+#if GTK_CHECK_VERSION(3, 0, 0)
+        PangoFontDescription *desc;
+        GtkStyleContext *sc = gtk_widget_get_style_context (label);
+        gtk_style_context_get (sc, GTK_STATE_FLAG_NORMAL, "font", &desc, NULL);
+        font_desc = pango_font_description_get_size (desc) / PANGO_SCALE;
+        pango_font_description_free (desc);
+#else
         GtkStyle *style = gtk_widget_get_style(label);
         font_desc = pango_font_description_get_size(style->font_desc) / PANGO_SCALE;
+#endif
     }
     font_desc *= custom_size_factor;
 
@@ -1799,12 +2043,18 @@ void lxpanel_draw_label_text(LXPanel * p, GtkWidget * label, const char * text,
                            gboolean bold, float custom_size_factor,
                            gboolean custom_color)
 {
-    panel_draw_label_text(p->priv, label, text, bold, custom_size_factor, custom_color);
+    gtk_label_set_text (GTK_LABEL (label), text);
 }
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+void lxpanel_draw_label_text_with_color(LXPanel * p, GtkWidget * label, const char * text,
+                                    gboolean bold, float custom_size_factor,
+                                    GdkRGBA *color)
+#else
 void lxpanel_draw_label_text_with_color(LXPanel * p, GtkWidget * label, const char * text,
                                     gboolean bold, float custom_size_factor,
                                     GdkColor *color)
+#endif
 {
     panel_draw_label_text_with_color(p->priv, label, text, bold, custom_size_factor, FALSE, color);
 }
@@ -1844,13 +2094,18 @@ static gboolean _panel_idle_reconfigure(gpointer widget)
             gtk_spin_button_set_value(GTK_SPIN_BUTTON(p->height_control), p->height);
         if ((p->widthtype == WIDTH_PIXEL) && (p->width_control != NULL))
         {
+#if GTK_CHECK_VERSION(3, 0, 0)
+            int value = ((p->orientation == GTK_ORIENTATION_HORIZONTAL) ? screen_width (NULL) : screen_height (NULL));
+#else
             int value = ((p->orientation == GTK_ORIENTATION_HORIZONTAL) ? gdk_screen_width() : gdk_screen_height());
+#endif
             gtk_spin_button_set_range(GTK_SPIN_BUTTON(p->width_control), 0, value);
             gtk_spin_button_set_value(GTK_SPIN_BUTTON(p->width_control), value);
         }
     }
 
     /* FIXME: it's deprecated, kept for binary compatibility */
+#if !GTK_CHECK_VERSION(3, 0, 0)
     if (p->orientation == GTK_ORIENTATION_HORIZONTAL) {
         p->my_box_new = gtk_hbox_new;
         p->my_separator_new = gtk_vseparator_new;
@@ -1858,6 +2113,7 @@ static gboolean _panel_idle_reconfigure(gpointer widget)
         p->my_box_new = gtk_vbox_new;
         p->my_separator_new = gtk_hseparator_new;
     }
+#endif
 
     /* recreate the main layout box */
     if (p->box != NULL)
@@ -1882,6 +2138,8 @@ static gboolean _panel_idle_reconfigure(gpointer widget)
     _panel_queue_update_background(panel);
 
     p->reconfigure_queued = 0;
+
+    warp_pointer (p);
 
     return FALSE;
 }
@@ -1936,12 +2194,19 @@ panel_parse_global(Panel *p, config_setting_t *cfg)
     }
     if (config_setting_lookup_int(cfg, "autohide", &i))
         p->autohide = i != 0;
+    if (config_setting_lookup_int(cfg, "point_at_menu", &i))
+        p->point_at_menu = i != 0;
     if (config_setting_lookup_int(cfg, "heightwhenhidden", &i))
         p->height_when_hidden = MAX(0, i);
     if (config_setting_lookup_string(cfg, "tintcolor", &str))
     {
+#if GTK_CHECK_VERSION(3, 0, 0)
+        if (!gdk_rgba_parse (&p->gtintcolor, str))
+            gdk_rgba_parse (&p->gtintcolor, "#FFFFFF");
+#else
         if (!gdk_color_parse (str, &p->gtintcolor))
             gdk_color_parse ("white", &p->gtintcolor);
+#endif
         p->tintcolor = gcolor2rgb24(&p->gtintcolor);
             DBG("tintcolor=%x\n", p->tintcolor);
     }
@@ -1949,8 +2214,13 @@ panel_parse_global(Panel *p, config_setting_t *cfg)
         p->usefontcolor = i != 0;
     if (config_setting_lookup_string(cfg, "fontcolor", &str))
     {
+#if GTK_CHECK_VERSION(3, 0, 0)
+        if (!gdk_rgba_parse (&p->gfontcolor, str))
+            gdk_rgba_parse (&p->gfontcolor, "#000000");
+#else
         if (!gdk_color_parse (str, &p->gfontcolor))
             gdk_color_parse ("black", &p->gfontcolor);
+#endif
         p->fontcolor = gcolor2rgb24(&p->gfontcolor);
             DBG("fontcolor=%x\n", p->fontcolor);
     }
@@ -1973,7 +2243,11 @@ panel_parse_global(Panel *p, config_setting_t *cfg)
 static void on_monitors_changed(GdkScreen* screen, gpointer unused)
 {
     GSList *pl;
+#if GTK_CHECK_VERSION(3, 0, 0)
+    int monitors = gdk_display_get_n_monitors (gdk_screen_get_display (screen));
+#else
     int monitors = gdk_screen_get_n_monitors(screen);
+#endif
 
     for (pl = all_panels; pl; pl = pl->next)
     {
@@ -2007,7 +2281,11 @@ static int panel_start(LXPanel *p)
     if (!list || !panel_parse_global(p->priv, config_setting_get_elem(list, 0)))
         RET(0);
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+    if (p->priv->monitor < gdk_display_get_n_monitors (gtk_widget_get_display (GTK_WIDGET (p))))
+#else
     if (p->priv->monitor < gdk_screen_get_n_monitors(screen))
+#endif
         panel_start_gui(p, list);
     if (monitors_handler == 0)
         monitors_handler = g_signal_connect(screen, "monitors-changed",
@@ -2040,6 +2318,56 @@ LXPanel* panel_new( const char* config_file, const char* config_name )
     return panel;
 }
 
+/* This is a modified version of panel_new; the sole difference is that if
+ * there is only one monitor connected, it shows all panels which would
+ * normally be displayed on monitor 1 on monitor 0 instead. */
+
+LXPanel* panel_new_mon_fb (const char* config_file, const char* config_name)
+{
+    LXPanel* panel = NULL;
+
+    if (G_LIKELY(config_file))
+    {
+        panel = panel_allocate (gdk_screen_get_default ());
+        panel->priv->name = g_strdup (config_name);
+        g_debug ("starting panel from file %s", config_file);
+        if (!config_read_file (panel->priv->config, config_file))
+        {
+            g_warning ( "lxpanel: can't start panel");
+            gtk_widget_destroy (GTK_WIDGET(panel));
+            return NULL;
+        }
+
+        GdkScreen *screen = gtk_widget_get_screen (GTK_WIDGET (panel));
+
+        /* parse global section of config file */
+        config_setting_t *list = config_setting_get_member (config_root_setting (panel->priv->config), "");
+        if (!list || !panel_parse_global (panel->priv, config_setting_get_elem (list, 0)))
+        {
+            g_warning ( "lxpanel: can't start panel");
+            gtk_widget_destroy (GTK_WIDGET(panel));
+            return NULL;
+        }
+
+#if GTK_CHECK_VERSION(3, 0, 0)
+        int n_mons = gdk_display_get_n_monitors (gtk_widget_get_display (GTK_WIDGET (panel)));
+#else
+        int n_mons = gdk_screen_get_n_monitors (screen);
+#endif
+        if (panel->priv->monitor < n_mons)
+            panel_start_gui (panel, list);
+        else if (n_mons == 1 && panel->priv->monitor == 1)
+        {
+            g_debug ("moving monitor 1 panel to monitor 0");
+            panel->priv->monitor = 0;
+            panel_start_gui (panel, list);
+        }
+
+        if (monitors_handler == 0)
+            monitors_handler = g_signal_connect (screen, "monitors-changed", G_CALLBACK (on_monitors_changed), NULL);
+    }
+    return panel;
+}
 
 GtkOrientation panel_get_orientation(LXPanel *panel)
 {
@@ -2049,6 +2377,15 @@ GtkOrientation panel_get_orientation(LXPanel *panel)
 gint panel_get_icon_size(LXPanel *panel)
 {
     return panel->priv->icon_size;
+}
+
+gint panel_get_safe_icon_size (LXPanel *panel)
+{
+    if (panel->priv->icon_size <= 20) return 16;
+    else if (panel->priv->icon_size <= 28) return 24;
+    else if (panel->priv->icon_size <= 40) return 32;
+    else if (panel->priv->icon_size <= 56) return 48;
+    else return 64;
 }
 
 gint panel_get_height(LXPanel *panel)
@@ -2063,13 +2400,15 @@ Window panel_get_xwindow(LXPanel *panel)
 
 gint panel_get_monitor(LXPanel *panel)
 {
-    return panel->priv->monitor;
+    return gdk_mon_num (panel->priv->monitor);
 }
 
+#if !GTK_CHECK_VERSION(3, 0, 0)
 GtkStyle *panel_get_defstyle(LXPanel *panel)
 {
     return panel->priv->defstyle;
 }
+#endif
 
 GtkIconTheme *panel_get_icon_theme(LXPanel *panel)
 {
@@ -2088,16 +2427,24 @@ gboolean panel_is_dynamic(LXPanel *panel)
 
 GtkWidget *panel_box_new(LXPanel *panel, gboolean homogeneous, gint spacing)
 {
+#if GTK_CHECK_VERSION(3, 0, 0)
+    return gtk_box_new (panel->priv->orientation, spacing);
+#else
     if (panel->priv->orientation == GTK_ORIENTATION_HORIZONTAL)
         return gtk_hbox_new(homogeneous, spacing);
     return gtk_vbox_new(homogeneous, spacing);
+#endif
 }
 
 GtkWidget *panel_separator_new(LXPanel *panel)
 {
+#if GTK_CHECK_VERSION(3, 0, 0)
+    return gtk_separator_new (panel->priv->orientation);
+#else
     if (panel->priv->orientation == GTK_ORIENTATION_HORIZONTAL)
         return gtk_vseparator_new();
     return gtk_hseparator_new();
+#endif
 }
 
 gboolean _class_is_present(const LXPanelPluginInit *init)

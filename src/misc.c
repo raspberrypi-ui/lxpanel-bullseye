@@ -851,6 +851,7 @@ calculate_width(int scrw, int pw, int wtype, int align, int margin,
     RET();
 }
 
+extern int gdk_mon_num (int index);
 
 void _calculate_position(LXPanel *panel, GdkRectangle *rect)
 {
@@ -864,11 +865,21 @@ void _calculate_position(LXPanel *panel, GdkRectangle *rect)
     {
         marea.x = 0;
         marea.y = 0;
+#if GTK_CHECK_VERSION(3, 0, 0)
+        marea.width = screen_width(screen);
+        marea.height = screen_height(screen);
+#else
         marea.width = gdk_screen_get_width(screen);
         marea.height = gdk_screen_get_height(screen);
+#endif
     }
+#if GTK_CHECK_VERSION(3, 0, 0)
+    else if (np->monitor < gdk_display_get_n_monitors(gtk_widget_get_display(GTK_WIDGET(panel))))
+        gdk_monitor_get_geometry (gdk_display_get_monitor (gdk_screen_get_display (screen), gdk_mon_num (np->monitor)), &marea);
+#else
     else if (np->monitor < gdk_screen_get_n_monitors(screen))
-        gdk_screen_get_monitor_geometry(screen,np->monitor,&marea);
+        gdk_screen_get_monitor_geometry(screen,gdk_mon_num (np->monitor),&marea);
+#endif
     else
     {
         marea.x = 0;
@@ -965,6 +976,10 @@ static void _lxpanel_button_set_icon(GtkWidget* btn, FmIcon* icon, gint size)
     /* Locate the image within the button. */
     GtkWidget * child = gtk_bin_get_child(GTK_BIN(btn));
     GtkWidget * img = NULL;
+#if GTK_CHECK_VERSION(3, 0, 0)
+    if (GTK_IS_BUTTON (btn) && !(img = gtk_button_get_image (GTK_BUTTON(btn))))
+    {
+#endif
     if (GTK_IS_IMAGE(child))
         img = child;
     else if (GTK_IS_BOX(child))
@@ -973,6 +988,9 @@ static void _lxpanel_button_set_icon(GtkWidget* btn, FmIcon* icon, gint size)
         img = GTK_WIDGET(GTK_IMAGE(children->data));
         g_list_free(children);
     }
+#if GTK_CHECK_VERSION(3, 0, 0)
+    }
+#endif
 
     if (img != NULL)
     {
@@ -1042,12 +1060,13 @@ void fb_button_set_from_file(GtkWidget * btn, const char * img_file, gint width,
     lxpanel_button_set_icon(btn, img_file, height);
 }
 
+#define ICON_BUTTON_TRIM 4
 static void _gtk_image_set_from_file_scaled(GtkWidget * img, ImgData * data)
 {
     gint size = data->size;
 
     if (size < 0 && data->panel)
-        size = data->panel->priv->icon_size;
+        size = data->panel->priv->icon_size - ICON_BUTTON_TRIM;
 
     if (data->pixbuf != NULL)
     {
@@ -1091,7 +1110,11 @@ static void _gtk_image_set_from_file_scaled(GtkWidget * img, ImgData * data)
     else
     {
         /* No pixbuf available.  Set the "missing image" icon. */
+#if GTK_CHECK_VERSION(3, 0, 0)
+        gtk_image_set_from_icon_name(GTK_IMAGE(img), "gtk-missing-image", GTK_ICON_SIZE_BUTTON);
+#else
         gtk_image_set_from_stock(GTK_IMAGE(img), GTK_STOCK_MISSING_IMAGE, GTK_ICON_SIZE_BUTTON);
+#endif
     }
 }
 
@@ -1185,13 +1208,37 @@ get_button_spacing(GtkRequisition *req, GtkContainer *parent, gchar *name)
         gtk_container_add(parent, b);
 
     gtk_widget_show(b);
+#if GTK_CHECK_VERSION(3, 0, 0)
+    gtk_widget_get_preferred_size(b, NULL, req);
+#else
     gtk_widget_size_request(b, req);
+#endif
 
     gtk_widget_destroy(b);
     RET();
 }
 
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+guint32 gcolor2rgb24(GdkRGBA *color)
+{
+    guint32 i;
+    double f;
+
+    ENTER;
+
+    f = color->red * 255.999;
+    i = ((guint32) f) & 0xFF;
+    i <<= 8;
+    f = color->green * 255.999;
+    i |= ((guint32) f) & 0xFF;
+    i <<= 8;
+    f = color->blue * 255.999;
+    i |= ((guint32) f) & 0xFF;
+    DBG("i=%x\n", i);
+    RET(i);
+}
+#else
 guint32 gcolor2rgb24(GdkColor *color)
 {
     guint32 i;
@@ -1206,6 +1253,7 @@ guint32 gcolor2rgb24(GdkColor *color)
     DBG("i=%x\n", i);
     RET(i);
 }
+#endif
 
 /* Handler for "enter-notify-event" signal on image that has highlighting requested. */
 static gboolean fb_button_enter(GtkImage * widget, GdkEventCrossing * event)
@@ -1278,8 +1326,16 @@ static GtkWidget *_lxpanel_button_compose(GtkWidget *event_box, GtkWidget *image
 {
     ImgData * data = (ImgData *) g_object_get_qdata(G_OBJECT(image), img_data_id);
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+    gtk_widget_set_margin_start (image, 0);
+    gtk_widget_set_margin_end (image, 0);
+    gtk_widget_set_margin_top (image, 0);
+    gtk_widget_set_margin_bottom (image, 0);
+#else
     gtk_misc_set_padding(GTK_MISC(image), 0, 0);
     gtk_misc_set_alignment(GTK_MISC(image), 0.5, 0.5);
+#endif
+#if 0
     if (highlight_color != 0 && data != NULL)
     {
         data->hicolor = highlight_color;
@@ -1287,14 +1343,23 @@ static GtkWidget *_lxpanel_button_compose(GtkWidget *event_box, GtkWidget *image
         g_signal_connect_swapped(G_OBJECT(event_box), "enter-notify-event", G_CALLBACK(fb_button_enter), image);
         g_signal_connect_swapped(G_OBJECT(event_box), "leave-notify-event", G_CALLBACK(fb_button_leave), image);
     }
+#endif
 
     if (label == NULL)
+#if GTK_CHECK_VERSION(3, 0, 0)
+        gtk_button_set_image (GTK_BUTTON(event_box), image);
+#else
         gtk_container_add(GTK_CONTAINER(event_box), image);
+#endif
     else
     {
         GtkWidget *inner, *lbl;
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+        inner = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+#else
         inner = gtk_hbox_new(FALSE, 0);
+#endif
         gtk_container_set_border_width(GTK_CONTAINER(inner), 0);
         gtk_widget_set_can_focus(inner, FALSE);
         gtk_container_add(GTK_CONTAINER(event_box), inner);
@@ -1312,16 +1377,27 @@ static GtkWidget *_lxpanel_button_compose(GtkWidget *event_box, GtkWidget *image
         }
         else
             gtk_label_set_text(GTK_LABEL(lbl), label);
+#if GTK_CHECK_VERSION(3, 0, 0)
+        gtk_widget_set_margin_start (lbl, 2);
+        gtk_widget_set_margin_end (lbl, 2);
+#else
         gtk_misc_set_padding(GTK_MISC(lbl), 2, 0);
+#endif
         gtk_box_pack_end(GTK_BOX(inner), lbl, FALSE, FALSE, 0);
     }
 
+    if (GTK_IS_BUTTON (event_box)) gtk_button_set_relief (GTK_BUTTON (event_box), GTK_RELIEF_NONE);
     gtk_widget_show_all(event_box);
     return event_box;
 }
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+GtkWidget *lxpanel_button_compose(GtkWidget *event_box, GtkWidget *image,
+                                  GdkRGBA *color, const gchar *label)
+#else
 GtkWidget *lxpanel_button_compose(GtkWidget *event_box, GtkWidget *image,
                                   GdkColor *color, const gchar *label)
+#endif
 {
     gulong highlight_color = color ? gcolor2rgb24(color) : PANEL_ICON_HIGHLIGHT;
     return _lxpanel_button_compose(event_box, image, highlight_color, label);
@@ -1340,14 +1416,22 @@ static GtkWidget *_lxpanel_button_new_for_icon(LXPanel *panel, FmIcon *icon,
     return _lxpanel_button_compose(event_box, image, highlight_color, label);
 }
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+GtkWidget *lxpanel_button_new_for_icon(LXPanel *panel, const gchar *name, GdkRGBA *color, const gchar *label)
+#else
 GtkWidget *lxpanel_button_new_for_icon(LXPanel *panel, const gchar *name, GdkColor *color, const gchar *label)
+#endif
 {
     gulong highlight_color = color ? gcolor2rgb24(color) : PANEL_ICON_HIGHLIGHT;
     return _lxpanel_button_new_for_icon(panel, fm_icon_from_name(name), -1,
                                         highlight_color, label);
 }
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+GtkWidget *lxpanel_button_new_for_fm_icon(LXPanel *panel, FmIcon *icon, GdkRGBA *color, const gchar *label)
+#else
 GtkWidget *lxpanel_button_new_for_fm_icon(LXPanel *panel, FmIcon *icon, GdkColor *color, const gchar *label)
+#endif
 {
     gulong highlight_color = color ? gcolor2rgb24(color) : PANEL_ICON_HIGHLIGHT;
     return _lxpanel_button_new_for_icon(panel, g_object_ref(icon), -1,
@@ -1650,5 +1734,43 @@ gboolean lxpanel_launch_app(const char* exec, GList* files, gboolean in_terminal
 
     return (error == NULL);
 }
+
+#if GTK_CHECK_VERSION(3, 0, 0)
+int screen_width (GdkScreen *scr)
+{
+    GdkDisplay *disp = gdk_screen_get_display (scr == NULL ? gdk_screen_get_default () : scr);
+    GdkMonitor *mon;
+    GdkRectangle rect;
+    int min = -1, max = 0, i;
+
+    for (i = 0; i < gdk_display_get_n_monitors (disp); i++)
+    {
+        mon = gdk_display_get_monitor (disp, i);
+        gdk_monitor_get_geometry (mon, &rect);
+        if (min == -1 || rect.x < min) min = rect.x;
+        if (rect.x + rect.width > max) max = rect.x + rect.width;
+    }
+
+    return max - min;
+}
+
+int screen_height (GdkScreen *scr)
+{
+    GdkDisplay *disp = gdk_screen_get_display (scr == NULL ? gdk_screen_get_default () : scr);
+    GdkMonitor *mon;
+    GdkRectangle rect;
+    int min = -1, max = 0, i;
+
+    for (i = 0; i < gdk_display_get_n_monitors (disp); i++)
+    {
+        mon = gdk_display_get_monitor (disp, i);
+        gdk_monitor_get_geometry (mon, &rect);
+        if (min == -1 || rect.y < min) min = rect.y;
+        if (rect.y + rect.height > max) max = rect.y + rect.height;
+    }
+
+    return max - min;
+}
+#endif
 
 /* vim: set sw=4 et sts=4 : */

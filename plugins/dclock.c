@@ -46,6 +46,8 @@
 #define DEFAULT_TIP_FORMAT    "%A %x"
 #define DEFAULT_CLOCK_FORMAT  "%R"
 
+#define CLOCK_TEXT_PAD    6
+
 /* Private context for digital clock plugin. */
 typedef struct {
     GtkWidget * plugin;				/* Back pointer to plugin */
@@ -59,7 +61,7 @@ typedef struct {
     char * action;				/* Command to execute on a click */
     gboolean bold;				/* True if bold font */
     gboolean icon_only;				/* True if icon only (no clock value) */
-    gboolean center_text;
+    int center_text;
     guint timer;				/* Timer for periodic update */
     enum {
 	AWAITING_FIRST_CHANGE,			/* Experimenting to determine interval, waiting for first change */
@@ -77,6 +79,105 @@ static void dclock_destructor(gpointer user_data);
 static gboolean dclock_apply_configuration(gpointer user_data);
 static void dclock_on_panel_reconfigured(LXPanel *panel, GtkWidget *p);
 
+/* calculates how long (in pixels) a widget needs to be to hold the worst-case time in the current 24 hour period */
+static void set_clock_length (DClockPlugin *dc)
+{
+    struct timeval now;
+    struct tm *current_time;
+    int digit, maxval, maxdig, maxmin;
+    char clock_value[64];
+    GtkRequisition req;
+
+    // get today's date
+    gettimeofday (&now, NULL);
+    current_time = localtime (&now.tv_sec);
+
+        gtk_widget_set_size_request (dc->clock_label, -1,-1);
+    // find the longest digit
+    maxval = 0;
+    maxdig = 0;
+    for (digit = 0; digit < 10; digit++)
+    {
+        current_time->tm_min = digit;
+        strftime (clock_value, sizeof (clock_value), dc->clock_format, current_time);
+        gtk_label_set_text (GTK_LABEL (dc->clock_label), clock_value);
+#if GTK_CHECK_VERSION(3, 0, 0)
+        gtk_widget_get_preferred_size(dc->clock_label, NULL, &req);
+#else
+        gtk_widget_size_request (dc->clock_label, &req);
+#endif
+        if (req.width > maxval)
+        {
+            maxval = req.width;
+            maxdig = digit;
+        }
+    }
+
+    // maxdig now holds the widest digit - find the widest integer 00 - 59 for min and sec
+
+    if (maxdig < 6) maxmin = 10 * maxdig + maxdig;
+    else
+    {
+        maxmin = 0;
+        maxval = 0;
+        for (digit = 0; digit < 6; digit++)
+        {
+            current_time->tm_min = 10 * digit + maxdig;
+            strftime (clock_value, sizeof (clock_value), dc->clock_format, current_time);
+            gtk_label_set_text (GTK_LABEL (dc->clock_label), clock_value);
+#if GTK_CHECK_VERSION(3, 0, 0)
+            gtk_widget_get_preferred_size(dc->clock_label, NULL, &req);
+#else
+            gtk_widget_size_request (dc->clock_label, &req);
+#endif
+            if (req.width > maxval)
+            {
+                maxval = req.width;
+                maxmin = current_time->tm_min;
+            }
+        }
+    }
+
+    // maxmin now holds the longest minute and second value - find the longest hour, incl am and pm
+
+    current_time->tm_min = maxmin;
+    current_time->tm_sec = maxmin;
+    maxval = 0;
+    for (digit = 0; digit < 23; digit++)
+    {
+        current_time->tm_hour = digit;
+        strftime (clock_value, sizeof (clock_value), dc->clock_format, current_time);
+        gtk_label_set_text (GTK_LABEL (dc->clock_label), clock_value);
+#if GTK_CHECK_VERSION(3, 0, 0)
+        gtk_widget_get_preferred_size(dc->clock_label, NULL, &req);
+#else
+        gtk_widget_size_request (dc->clock_label, &req);
+#endif
+        if (req.width > maxval)
+        {
+            maxval = req.width;
+        }
+    }
+
+    // maxval is now width in pixels of longest time today...
+
+    // put the clock back to where it should be
+    gettimeofday (&now, NULL);
+    current_time = localtime (&now.tv_sec);
+    strftime (clock_value, sizeof (clock_value), dc->clock_format, current_time);
+    gtk_label_set_text (GTK_LABEL (dc->clock_label), clock_value);
+    gtk_widget_set_size_request (dc->clock_label, maxval + CLOCK_TEXT_PAD, -1);
+}
+
+/* Handler for "focus-out" signal on popup window. */
+static gboolean dclock_popup_focus_out(GtkWidget * widget, GdkEvent * event, DClockPlugin * dc)
+{
+    /* Hide the widget. */
+    gtk_widget_destroy(dc->calendar_window);
+    dc->calendar_window = NULL;
+    return FALSE;
+}
+
 /* Display a window containing the standard calendar widget. */
 static GtkWidget * dclock_create_calendar(DClockPlugin * dc)
 {
@@ -90,11 +191,20 @@ static GtkWidget * dclock_create_calendar(DClockPlugin * dc)
     gtk_container_set_border_width(GTK_CONTAINER(win), 5);
     gtk_window_set_skip_taskbar_hint(GTK_WINDOW(win), TRUE);
     gtk_window_set_skip_pager_hint(GTK_WINDOW(win), TRUE);
+#if GTK_CHECK_VERSION(3, 0, 0)
+    gtk_window_set_type_hint(GTK_WINDOW(win), GDK_WINDOW_TYPE_HINT_DROPDOWN_MENU);
+    gtk_widget_set_name (win, "panelpopup");
+#else
     gtk_window_set_type_hint(GTK_WINDOW(win), GDK_WINDOW_TYPE_HINT_DIALOG);
+#endif
     gtk_window_stick(GTK_WINDOW(win));
 
     /* Create a vertical box as a child of the window. */
+#if GTK_CHECK_VERSION(3, 0, 0)
+    GtkWidget * box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+#else
     GtkWidget * box = gtk_vbox_new(FALSE, 0);
+#endif
     gtk_container_add(GTK_CONTAINER(win), GTK_WIDGET(box));
 
     /* Create a standard calendar widget as a child of the vertical box. */
@@ -108,6 +218,9 @@ static GtkWidget * dclock_create_calendar(DClockPlugin * dc)
     /* Preset the widget position right now to not move it across the screen */
     lxpanel_plugin_popup_set_position_helper(dc->panel, dc->plugin, win, &x, &y);
     gtk_window_move(GTK_WINDOW(win), x, y);
+
+    /* Connect signals. */
+    g_signal_connect(G_OBJECT(win), "focus-out-event", G_CALLBACK(dclock_popup_focus_out), dc);
 
     /* Return the widget. */
     return win;
@@ -131,8 +244,13 @@ static gboolean dclock_button_press_event(GtkWidget * widget, GdkEventButton * e
     {
         if (dc->calendar_window == NULL)
         {
-            dc->calendar_window = dclock_create_calendar(dc);
-            gtk_widget_show_all(dc->calendar_window);
+            gint x, y;
+            dc->calendar_window = dclock_create_calendar (dc);
+            gtk_window_iconify (GTK_WINDOW (dc->calendar_window));
+            gtk_widget_show_all (dc->calendar_window);
+            lxpanel_plugin_popup_set_position_helper (panel, widget, dc->calendar_window, &x, &y);
+            gdk_window_move (gtk_widget_get_window (dc->calendar_window), x, y);
+            gtk_window_present (GTK_WINDOW (dc->calendar_window));
         }
         else
         {
@@ -169,6 +287,21 @@ static void dclock_timer_set(DClockPlugin * dc, struct timeval *current_time)
     dc->timer = g_timeout_add(milliseconds, (GSourceFunc) dclock_update_display, (gpointer) dc);
 }
 
+/* Compare length and content of two strings to see how much they have in common */
+static int strdiff (char *str1, char *str2)
+{
+    int index, diffs = 0;
+    int l1 = strlen (str1);
+    int l2 = strlen (str2);
+
+    if (l1 != l2) return 1;
+    for (index = 0; index < l1; index++)
+        if (str1[index] != str2[index]) diffs++;
+
+    if (diffs > 3) return 1;
+    return 0;
+}
+
 /* Periodic timer callback.
  * Also used during initialization and configuration change to do a redraw. */
 static gboolean dclock_update_display(DClockPlugin * dc)
@@ -199,6 +332,12 @@ static gboolean dclock_update_display(DClockPlugin * dc)
     if (( ! dc->icon_only)
     && ((dc->prev_clock_value == NULL) || (strcmp(dc->prev_clock_value, clock_value) != 0)))
     {
+        // update the text widget length if the contents have changed significantly....
+        if (dc->prev_clock_value == NULL || strdiff (clock_value, dc->prev_clock_value))
+        {
+            set_clock_length (dc);
+        }
+
         /* Convert "\n" escapes in the user's format string to newline characters. */
         char * newlines_converted = NULL;
         if (strstr(clock_value, "\\n") != NULL)
@@ -311,26 +450,37 @@ static GtkWidget *dclock_constructor(LXPanel *panel, config_setting_t *settings)
     if (config_setting_lookup_int(settings, "IconOnly", &tmp_int))
         dc->icon_only = tmp_int != 0;
     if (config_setting_lookup_int(settings, "CenterText", &tmp_int))
-        dc->center_text = tmp_int != 0;
+        dc->center_text = tmp_int;
 
     /* Save construction pointers */
     dc->panel = panel;
     dc->settings = settings;
 
     /* Allocate top level widget and set into Plugin widget pointer. */
-    dc->plugin = p = gtk_event_box_new();
+    dc->plugin = p = gtk_button_new();
+    gtk_button_set_relief (GTK_BUTTON (dc->plugin), GTK_RELIEF_NONE);
     lxpanel_plugin_set_data(p, dc, dclock_destructor);
 
     /* Allocate a horizontal box as the child of the top level. */
+#if GTK_CHECK_VERSION(3, 0, 0)
+    GtkWidget * hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+    gtk_box_set_homogeneous (GTK_BOX(hbox), TRUE);
+#else
     GtkWidget * hbox = gtk_hbox_new(TRUE, 0);
+#endif
     gtk_container_add(GTK_CONTAINER(p), hbox);
     gtk_widget_show(hbox);
 
     /* Create a label and an image as children of the horizontal box.
      * Only one of these is visible at a time, controlled by user preference. */
     dc->clock_label = gtk_label_new(NULL);
+#if GTK_CHECK_VERSION(3, 0, 0)
+    gtk_widget_set_margin_start (dc->clock_label, 4);
+    gtk_widget_set_margin_end (dc->clock_label, 4);
+#else
     gtk_misc_set_alignment(GTK_MISC(dc->clock_label), 0.5, 0.5);
     gtk_misc_set_padding(GTK_MISC(dc->clock_label), 4, 0);
+#endif
     gtk_container_add(GTK_CONTAINER(hbox), dc->clock_label);
     dc->clock_icon = lxpanel_image_new_for_icon(panel, "clock", -1, NULL);
     gtk_container_add(GTK_CONTAINER(hbox), dc->clock_icon);
@@ -389,16 +539,27 @@ static gboolean dclock_apply_configuration(gpointer user_data)
     {
         gtk_widget_show(dc->clock_label);
         gtk_widget_hide(dc->clock_icon);
+        set_clock_length (dc);
     }
 
-    if (dc->center_text)
-    {
-        gtk_label_set_justify(GTK_LABEL(dc->clock_label), GTK_JUSTIFY_CENTER);
-    }
+    if (dc->center_text == 2)
+#if GTK_CHECK_VERSION(3, 0, 0)
+        gtk_label_set_xalign (GTK_LABEL(dc->clock_label), 1.0);
+#else
+        gtk_misc_set_alignment(GTK_MISC(dc->clock_label), 1.0, 0.5);
+#endif
+    else if (dc->center_text == 1)
+#if GTK_CHECK_VERSION(3, 0, 0)
+        gtk_label_set_xalign (GTK_LABEL(dc->clock_label), 0.5);
+#else
+        gtk_misc_set_alignment(GTK_MISC(dc->clock_label), 0.5, 0.5);
+#endif
     else
-    {
-        gtk_label_set_justify(GTK_LABEL(dc->clock_label), GTK_JUSTIFY_LEFT);
-    }
+#if GTK_CHECK_VERSION(3, 0, 0)
+        gtk_label_set_xalign (GTK_LABEL(dc->clock_label), 0.0);
+#else
+        gtk_misc_set_alignment(GTK_MISC(dc->clock_label), 0.0, 0.5);
+#endif
 
     /* Rerun the experiment to determine update interval and update the display. */
     g_free(dc->prev_clock_value);
@@ -436,9 +597,12 @@ static GtkWidget *dclock_configure(LXPanel *panel, GtkWidget *p)
         _("Tooltip Format"), &dc->tooltip_format, CONF_TYPE_STR,
         _("Format codes: man 3 strftime; %n for line break"), NULL, CONF_TYPE_TRIM,
         _("Action when clicked (default: display calendar)"), &dc->action, CONF_TYPE_STR,
-        _("Bold font"), &dc->bold, CONF_TYPE_BOOL,
+        //_("Bold font"), &dc->bold, CONF_TYPE_BOOL,
         _("Tooltip only"), &dc->icon_only, CONF_TYPE_BOOL,
-        _("Center text"), &dc->center_text, CONF_TYPE_BOOL,
+        //_("Center text"), &dc->center_text, CONF_TYPE_BOOL,
+        _("Left align"), &dc->center_text, CONF_TYPE_RBUTTON,
+        _("Center text"), &dc->center_text, CONF_TYPE_RBUTTON,
+        _("Right align"), &dc->center_text, CONF_TYPE_RBUTTON,
         NULL);
 }
 

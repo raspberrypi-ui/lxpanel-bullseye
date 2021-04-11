@@ -101,10 +101,14 @@ netstatus_icon_get_default_pixbuf (NetstatusIcon *icon __attribute__((unused)))
 
   if (!fallback_pixbuf)
     {
+#if GTK_CHECK_VERSION(3, 0, 0)
+      fallback_pixbuf = gdk_pixbuf_new_from_data (fallback_icon_data, GDK_COLORSPACE_RGB, TRUE, 8, 48, 48, 192, NULL, NULL);
+#else
       fallback_pixbuf = gdk_pixbuf_new_from_inline (-1,
 						    fallback_icon_data,
 						    FALSE,
 						    NULL);
+#endif
       g_object_add_weak_pointer (G_OBJECT (fallback_pixbuf),
 				 (gpointer) &fallback_pixbuf);
 
@@ -178,7 +182,11 @@ netstatus_icon_lookup_icon_theme (NetstatusIcon *icon,
     {
       filename = g_strdup (gtk_icon_info_get_filename (icon_info));
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+      g_object_unref (icon_info);
+#else
       gtk_icon_info_free (icon_info);
+#endif
     }
 
   return filename;
@@ -588,7 +596,11 @@ netstatus_icon_scale_icons (NetstatusIcon  *icon,
 static inline GObjectClass *
 get_box_class (GtkOrientation orientation)
 {
+#if GTK_CHECK_VERSION(3, 0, 0)
+  return g_type_class_peek(GTK_TYPE_BOX);
+#else
   return g_type_class_peek(orientation == GTK_ORIENTATION_HORIZONTAL ? GTK_TYPE_HBOX : GTK_TYPE_VBOX);
+#endif
 }
 
 #if !GTK_CHECK_VERSION(3, 0, 0)
@@ -699,9 +711,11 @@ netstatus_icon_realize (GtkWidget *widget)
   gtk_widget_set_window (widget, window);
   gdk_window_set_user_data (window, widget);
 
+#if !GTK_CHECK_VERSION(3, 0, 0)
   gtk_widget_ensure_style (widget);
   style = gtk_widget_get_style (widget);
   gtk_style_set_background (style, window, GTK_STATE_NORMAL);
+#endif
 }
 
 static gboolean

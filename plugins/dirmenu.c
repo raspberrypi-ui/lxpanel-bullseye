@@ -125,12 +125,20 @@ static GtkWidget * dirmenu_create_menu(DirMenuPlugin * dm, const char * path, gb
     {
         int w;
         int h;
+#if GTK_CHECK_VERSION(3, 0, 0)
+        gtk_icon_size_lookup (GTK_ICON_SIZE_MENU, &w, &h);
+#else
         gtk_icon_size_lookup_for_settings(gtk_widget_get_settings(menu), GTK_ICON_SIZE_MENU, &w, &h);
+#endif
         dm->folder_icon = gtk_icon_theme_load_icon(
             panel_get_icon_theme(dm->panel),
             "gnome-fs-directory", MAX(w, h), 0, NULL);
         if (dm->folder_icon == NULL)
+#if GTK_CHECK_VERSION(3, 0, 0)
+            dm->folder_icon = gtk_icon_theme_load_icon(panel_get_icon_theme(dm->panel), "gtk-directory", MAX(w, h), 0, NULL);
+#else
             dm->folder_icon = gtk_widget_render_icon(menu, GTK_STOCK_DIRECTORY, GTK_ICON_SIZE_MENU, NULL);
+#endif
     }
 
     g_object_set_data_full(G_OBJECT(menu), "path", g_strdup(path), g_free);
@@ -188,10 +196,14 @@ static GtkWidget * dirmenu_create_menu(DirMenuPlugin * dm, const char * path, gb
     while ((dir_cursor = dir_list) != NULL)
     {
         /* Create and initialize menu item. */
+#if GTK_CHECK_VERSION(3, 0, 0)
+        GtkWidget * item = gtk_menu_item_new_with_label(dir_cursor->directory_name);
+#else
         GtkWidget * item = gtk_image_menu_item_new_with_label(dir_cursor->directory_name);
         gtk_image_menu_item_set_image(
             GTK_IMAGE_MENU_ITEM(item),
             gtk_image_new_from_stock(GTK_STOCK_DIRECTORY, GTK_ICON_SIZE_MENU));
+#endif
         GtkWidget * dummy = gtk_menu_new();
         gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), dummy);
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
@@ -208,7 +220,11 @@ static GtkWidget * dirmenu_create_menu(DirMenuPlugin * dm, const char * path, gb
     }
 
     /* Create "Open" and "Open in Terminal" items. */
+#if GTK_CHECK_VERSION(3, 0, 0)
+    GtkWidget * item = gtk_menu_item_new_with_mnemonic( _("_Open") );
+#else
     GtkWidget * item = gtk_image_menu_item_new_from_stock( GTK_STOCK_OPEN, NULL );
+#endif
     g_signal_connect(item, "activate", G_CALLBACK(dirmenu_menuitem_open_directory), dm);
     GtkWidget * term = gtk_menu_item_new_with_mnemonic( _("Open in _Terminal") );
     g_signal_connect(term, "activate", G_CALLBACK(dirmenu_menuitem_open_in_terminal), dm);
@@ -239,7 +255,11 @@ static void dirmenu_show_menu(GtkWidget * widget, DirMenuPlugin * dm, int btn, g
     g_signal_connect(menu, "selection-done", G_CALLBACK(dirmenu_menu_selection_done), dm);
 
     /* Show the menu.  Use a positioning function to get it placed next to the top level widget. */
+#if GTK_CHECK_VERSION(3, 0, 0)
+    gtk_menu_popup_at_pointer (GTK_MENU(menu), NULL);
+#else
     gtk_menu_popup(GTK_MENU(menu), NULL, NULL, (GtkMenuPositionFunc) dirmenu_popup_set_position, widget, btn, time);
+#endif
 }
 
 /* Handler for button-press-event on top level widget. */

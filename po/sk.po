@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxpanel\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-03-01 01:38+0200\n"
-"PO-Revision-Date: 2020-12-12 22:51+0100\n"
+"POT-Creation-Date: 2020-12-21 01:33+0100\n"
+"PO-Revision-Date: 2020-12-21 01:36+0100\n"
 "Last-Translator: Jose Riha <jose1711@gmail.com>\n"
 "Language-Team: Slovak <sk-i18n@lists.linux.sk>\n"
 "Language: sk_SK\n"
@@ -50,24 +50,24 @@ msgstr "Dostupné moduly"
 msgid "Logout command is not set"
 msgstr "Príkaz na odhlásenie nie je nastavený"
 
-#: ../src/configurator.c:1495
+#: ../src/configurator.c:1519
 msgid "Select a directory"
 msgstr "Vyberte adresár"
 
-#: ../src/configurator.c:1495 ../src/configurator.c:1607
+#: ../src/configurator.c:1519 ../src/configurator.c:1633
 msgid "Select a file"
 msgstr "Vyberte súbor"
 
-#: ../src/configurator.c:1640
+#: ../src/configurator.c:1692
 msgid "_Browse"
 msgstr "_Prechádzať"
 
-#: ../src/panel.c:1292
+#: ../src/panel.c:1403
 msgid "There is no room for another panel. All the edges are taken."
 msgstr ""
 "Na vytvorenie nového panela už nie je miesto. Všetky okraje sú už obsadené."
 
-#: ../src/panel.c:1318
+#: ../src/panel.c:1429
 msgid ""
 "Really delete this panel?\n"
 "<b>Warning: This can not be recovered.</b>"
@@ -75,94 +75,94 @@ msgstr ""
 "Skutočne chcete zmazať tento panel?\n"
 "<b>Upozornenie: Túto operáciu nemožno vrátiť.</b>"
 
-#: ../src/panel.c:1320
+#: ../src/panel.c:1431
 msgid "Confirm"
 msgstr "Potvrdiť"
 
 #. TRANSLATORS: Replace this string with your names, one name per line.
-#: ../src/panel.c:1355
+#: ../src/panel.c:1466
 msgid "translator-credits"
 msgstr ""
 "Ivan Masár <helix84@centrum.sk>, 2007, 2009.\n"
 "Miroslav Biňas <mirek@cnl.sk>, 2018, 2019.\n"
 "Jose Riha <jose1711@gmail.com>, 2020."
 
-#: ../src/panel.c:1360
+#: ../src/panel.c:1471
 msgid "LXPanel"
 msgstr "LXPanel"
 
-#: ../src/panel.c:1378
-msgid "Copyright (C) 2008-2021"
-msgstr "Copyright (C) 2008-2021"
+#: ../src/panel.c:1489
+msgid "Copyright (C) 2008-2019"
+msgstr "Copyright (C) 2008-2019"
 
-#: ../src/panel.c:1379
+#: ../src/panel.c:1490
 msgid "Desktop panel for LXDE project"
 msgstr "Panel plochy projektu LXDE"
 
-#: ../src/panel.c:1421
+#: ../src/panel.c:1532
 #, c-format
-msgid "\"%s\" Settings"
+msgid "%s Settings"
 msgstr "Nastavenia „%s“"
 
-#: ../src/panel.c:1442
+#: ../src/panel.c:1553
 msgid "Add / Remove Panel Items"
 msgstr "Pridať / odstrániť položky panela"
 
-#: ../src/panel.c:1450
+#: ../src/panel.c:1561
 #, c-format
 msgid "Remove \"%s\" From Panel"
 msgstr "Odstrániť „%s“ z panela"
 
-#: ../src/panel.c:1462
+#: ../src/panel.c:1573
 msgid "Panel Settings"
 msgstr "Nastavenia panela"
 
-#: ../src/panel.c:1468
+#: ../src/panel.c:1579
 msgid "Create New Panel"
 msgstr "Vytvoriť nový panel"
 
-#: ../src/panel.c:1474
+#: ../src/panel.c:1585
 msgid "Delete This Panel"
 msgstr "Zmazať tento panel"
 
-#: ../src/panel.c:1485
+#: ../src/panel.c:1596
 msgid "About"
 msgstr "O aplikácii"
 
-#: ../src/panel.c:1492
+#: ../src/panel.c:1603
 msgid "Panel"
 msgstr "Panel"
 
-#: ../src/panel.c:1710 ../src/panel.c:1718 ../data/ui/panel-pref.glade.h:22
+#: ../src/panel.c:1821 ../src/panel.c:1829 ../data/ui/panel-pref.glade.h:22
 msgid "Height:"
 msgstr "Výška:"
 
-#: ../src/panel.c:1711 ../src/panel.c:1717 ../data/ui/panel-pref.glade.h:21
+#: ../src/panel.c:1822 ../src/panel.c:1828 ../data/ui/panel-pref.glade.h:21
 msgid "Width:"
 msgstr "Šírka:"
 
-#: ../src/panel.c:1712 ../data/ui/panel-pref.glade.h:13
+#: ../src/panel.c:1823 ../data/ui/panel-pref.glade.h:13
 msgid "Left"
 msgstr "Vľavo"
 
-#: ../src/panel.c:1713 ../data/ui/panel-pref.glade.h:14
+#: ../src/panel.c:1824 ../data/ui/panel-pref.glade.h:14
 msgid "Right"
 msgstr "Vpravo"
 
-#: ../src/panel.c:1719 ../data/ui/panel-pref.glade.h:12
+#: ../src/panel.c:1830 ../data/ui/panel-pref.glade.h:12
 msgid "Top"
 msgstr "Hore"
 
-#: ../src/panel.c:1720 ../data/ui/panel-pref.glade.h:11
+#: ../src/panel.c:1831 ../data/ui/panel-pref.glade.h:11
 msgid "Bottom"
 msgstr "Dolu"
 
-#: ../src/plugin.c:348
+#: ../src/plugin.c:353
 msgid "No file manager is configured."
 msgstr "Nie je nakonfigurovaný žiadny správca súborov."
 
 #. { "configure", N_("Preferences"), configure },
-#: ../src/gtk-run.c:385 ../src/main.c:69 ../plugins/menu.c:718
+#: ../src/gtk-run.c:385 ../src/main.c:70 ../plugins/menu.c:733
 msgid "Run"
 msgstr "Spustiť"
 
@@ -170,58 +170,58 @@ msgstr "Spustiť"
 msgid "Enter the command you want to execute:"
 msgstr "Zadajte príkaz, ktorý chcete vykonať:"
 
-#: ../src/main.c:70 ../plugins/menu.c:719
+#: ../src/main.c:71 ../plugins/menu.c:734
 msgid "Restart"
 msgstr "Reštartovať"
 
-#: ../src/main.c:71 ../plugins/menu.c:720
+#: ../src/main.c:72 ../plugins/menu.c:735
 msgid "Logout"
 msgstr "Odhlásiť"
 
-#: ../src/main.c:323
+#: ../src/main.c:505
 #, c-format
-msgid "lxpanel %s - lightweight GTK+ panel for UNIX desktops\n"
-msgstr "lxpanel %s - odľahčený GTK+ panel pre unixové pracovné prostredia\n"
+msgid "lxpanel %s - lightweight GTK2+ panel for UNIX desktops\n"
+msgstr "lxpanel %s - odľahčený GTK2+ panel pre unixové pracovné prostredia\n"
 
-#: ../src/main.c:324
+#: ../src/main.c:506
 #, c-format
 msgid "Command line options:\n"
 msgstr "Voľby príkazového riadka:\n"
 
-#: ../src/main.c:325
+#: ../src/main.c:507
 #, c-format
 msgid " --help      -- print this help and exit\n"
 msgstr " --help      -- vypísať tohto pomocníka a skončiť\n"
 
-#: ../src/main.c:326
+#: ../src/main.c:508
 #, c-format
 msgid " --version   -- print version and exit\n"
 msgstr " --version   -- vypísať verziu a skončiť\n"
 
 #. g_print(_(" --log <number> -- set log level 0-5. 0 - none 5 - chatty\n"));
 #. g_print(_(" --configure -- launch configuration utility\n"));
-#: ../src/main.c:329
+#: ../src/main.c:511
 #, c-format
 msgid " --profile name -- use specified profile\n"
 msgstr " --profile meno -- použiť uvedený profil\n"
 
-#: ../src/main.c:331
+#: ../src/main.c:513
 #, c-format
 msgid " -h  -- same as --help\n"
 msgstr " -h  -- ekvivalent --help\n"
 
-#: ../src/main.c:332
+#: ../src/main.c:514
 #, c-format
 msgid " -p  -- same as --profile\n"
 msgstr " -p  -- ekvivalent --profile\n"
 
-#: ../src/main.c:333
+#: ../src/main.c:515
 #, c-format
 msgid " -v  -- same as --version\n"
 msgstr " -v  -- ekvivalent --version\n"
 
 #. g_print(_(" -C  -- same as --configure\n"));
-#: ../src/main.c:335
+#: ../src/main.c:517
 #, c-format
 msgid ""
 "\n"
@@ -290,7 +290,7 @@ msgstr "Veľkosť"
 msgid "Allocate space"
 msgstr "Vyhradiť miesto"
 
-#: ../data/ui/launchtaskbar.glade.h:1 ../plugins/launchtaskbar.c:2482
+#: ../data/ui/launchtaskbar.glade.h:1 ../plugins/launchtaskbar.c:2507
 msgid "Application Launch and Task Bar"
 msgstr "Panel úloh a spúšťanie aplikácií"
 
@@ -614,11 +614,27 @@ msgstr "<b>Úroveň logovania</b>"
 msgid "Advanced"
 msgstr "Pokročilé"
 
-#: ../plugins/cpu/cpu.c:310
+#: ../plugins/cpu/cpu.c:369
+msgid "CPU Usage"
+msgstr "Monitor využitia CPU"
+
+#: ../plugins/cpu/cpu.c:371
+msgid "Show usage as percentage"
+msgstr "Zobraziť využitie v percentách"
+
+#: ../plugins/cpu/cpu.c:372
+msgid "Foreground colour"
+msgstr "Farba popredia"
+
+#: ../plugins/cpu/cpu.c:373
+msgid "Background colour"
+msgstr "Farba pozadia"
+
+#: ../plugins/cpu/cpu.c:381
 msgid "CPU Usage Monitor"
 msgstr "Monitor využitia CPU"
 
-#: ../plugins/cpu/cpu.c:311 ../plugins/monitors/monitors.c:734
+#: ../plugins/cpu/cpu.c:383 ../plugins/monitors/monitors.c:734
 msgid "Display CPU usage"
 msgstr "Zobraziť využitie CPU"
 
@@ -626,7 +642,7 @@ msgstr "Zobraziť využitie CPU"
 msgid "Desktop Number / Workspace Name"
 msgstr "Číslo plochy / Názov plochy"
 
-#: ../plugins/deskno/deskno.c:212 ../plugins/dclock.c:439
+#: ../plugins/deskno/deskno.c:212
 msgid "Bold font"
 msgstr "Hrubé písmo"
 
@@ -638,143 +654,161 @@ msgstr "Zobraziť názvy plôch"
 msgid "Display workspace number, by cmeury@users.sf.net"
 msgstr "Zobrazenie čísla plochy, cmeury@users.sf.net"
 
-#: ../plugins/launchtaskbar.c:1831 ../plugins/launchtaskbar.c:2452
+#: ../plugins/launchtaskbar.c:1835 ../plugins/launchtaskbar.c:2477
 msgid "Application Launch Bar"
 msgstr "Spúšťací panel"
 
-#: ../plugins/launchtaskbar.c:1834 ../plugins/launchtaskbar.c:2462
+#: ../plugins/launchtaskbar.c:1838 ../plugins/launchtaskbar.c:2487
 msgid "Task Bar (Window List)"
 msgstr "Panel úloh (Zoznam okien)"
 
-#: ../plugins/launchtaskbar.c:1985
+#: ../plugins/launchtaskbar.c:2010
 msgid "A_dd to Launcher"
 msgstr "Pri_dať do spúšťača"
 
-#: ../plugins/launchtaskbar.c:1987
+#: ../plugins/launchtaskbar.c:2012
 msgid "Rem_ove from Launcher"
 msgstr "_Odstrániť zo spúšťača"
 
-#: ../plugins/launchtaskbar.c:1989
+#: ../plugins/launchtaskbar.c:2014
 msgid "_New Instance"
 msgstr "_Nová inštancia"
 
-#: ../plugins/launchtaskbar.c:2453
+#: ../plugins/launchtaskbar.c:2478
 msgid "Bar with buttons to launch application"
 msgstr "Panel s tlačidlami pre spúšťanie aplikácií"
 
-#: ../plugins/launchtaskbar.c:2463
+#: ../plugins/launchtaskbar.c:2488
 msgid ""
-"Taskbar shows all opened windows and allows to iconify them, shade or get "
+"Taskbar shows all opened windows and allow to iconify them, shade or get "
 "focus"
 msgstr ""
 "Panel úloh zobrazuje všetky otvorené okná a umožňuje ich ikonifikovať, "
 "zatieniť alebo aktivovať"
 
-#: ../plugins/launchtaskbar.c:2483
+#: ../plugins/launchtaskbar.c:2508
 msgid "Bar with buttons to launch application and/or show all opened windows"
 msgstr ""
-"Panel s tlačidlami pre spúšťanie aplikácií a/alebo zobrazenie všetkých otvorených "
-"okien"
+"Panel s tlačidlami pre spúšťanie aplikácií a/alebo zobrazenie všetkých "
+"otvorených okien"
 
 #. Add Raise menu item.
-#: ../plugins/task-button.c:352
+#: ../plugins/task-button.c:351
 msgid "_Raise"
 msgstr "_Zdvihnúť"
 
 #. Add Restore menu item.
-#: ../plugins/task-button.c:357
+#: ../plugins/task-button.c:356
 msgid "R_estore"
 msgstr "_Obnoviť"
 
 #. Add Maximize menu item.
-#: ../plugins/task-button.c:362
+#: ../plugins/task-button.c:361
 msgid "Ma_ximize"
 msgstr "Ma_ximalizovať"
 
 #. Add Iconify menu item.
-#: ../plugins/task-button.c:367
+#: ../plugins/task-button.c:366
 msgid "Ico_nify"
 msgstr "Iko_nifikovať"
 
-#: ../plugins/task-button.c:388
+#: ../plugins/task-button.c:387
 #, c-format
 msgid "Workspace _%d"
 msgstr "Pracovná plocha _%d"
 
-#: ../plugins/task-button.c:393
+#: ../plugins/task-button.c:392
 #, c-format
 msgid "Workspace %d"
 msgstr "Pracovná plocha %d"
 
 #. Add "move to all workspaces" item.  This causes the window to be visible no matter what desktop is active.
-#: ../plugins/task-button.c:410
+#: ../plugins/task-button.c:409
 msgid "_All workspaces"
 msgstr "Všetky pr_acovné plochy"
 
 #. FIXME: add "Current workspace" item, active if not on a current
 #. Add Move to Workspace menu item as a submenu.
-#: ../plugins/task-button.c:418
+#: ../plugins/task-button.c:417
 msgid "_Move to Workspace"
 msgstr "_Presunúť na plochu"
 
-#: ../plugins/task-button.c:433
+#: ../plugins/task-button.c:432
 msgid "_Close Window"
 msgstr "_Zatvoriť okno"
 
-#: ../plugins/task-button.c:1256
+#: ../plugins/task-button.c:1258
 msgid "_Close all windows"
 msgstr "_Zatvoriť všetky okná"
 
-#: ../plugins/dclock.c:433 ../plugins/dclock.c:453
+#: ../plugins/dclock.c:551 ../plugins/dclock.c:574
 msgid "Digital Clock"
 msgstr "Digitálne hodiny"
 
-#: ../plugins/dclock.c:435
+#: ../plugins/dclock.c:553
 msgid "Clock Format"
 msgstr "Formát hodín"
 
-#: ../plugins/dclock.c:436
+#: ../plugins/dclock.c:554
 msgid "Tooltip Format"
 msgstr "Formát bublinových tipov"
 
-#: ../plugins/dclock.c:437
+#: ../plugins/dclock.c:555
 #, c-format
 msgid "Format codes: man 3 strftime; %n for line break"
 msgstr "Formátovacie kódy: man 3 strftime; %n pre zalomenie riadka"
 
-#: ../plugins/dclock.c:438
+#: ../plugins/dclock.c:556
 msgid "Action when clicked (default: display calendar)"
 msgstr "Operácia po kliknutí (predvolená: zobraziť kalendár)"
 
-#: ../plugins/dclock.c:440
+#. _("Bold font"), &dc->bold, CONF_TYPE_BOOL,
+#: ../plugins/dclock.c:558
 msgid "Tooltip only"
 msgstr "Iba bublinové tipy"
 
-#: ../plugins/dclock.c:441
+#. _("Center text"), &dc->center_text, CONF_TYPE_BOOL,
+#: ../plugins/dclock.c:560
+msgid "Left align"
+msgstr "Zarovnať doľava"
+
+#: ../plugins/dclock.c:561
 msgid "Center text"
 msgstr "Zarovnať text na stred"
 
-#: ../plugins/dclock.c:454
+#: ../plugins/dclock.c:562
+msgid "Right align"
+msgstr "Zarovnať doprava"
+
+#: ../plugins/dclock.c:575
 msgid "Display digital clock and tooltip"
 msgstr "Zobraziť digitálne hodiny a bublinové tipy"
 
-#: ../plugins/menu.c:360
+#: ../plugins/menu.c:363
 msgid "Add to desktop"
 msgstr "Pridať na plochu"
 
-#: ../plugins/menu.c:367
+#: ../plugins/menu.c:370
 msgid "Properties"
 msgstr "Vlastnosti"
 
-#: ../plugins/menu.c:989 ../plugins/menu.c:997
+#: ../plugins/menu.c:717
+msgid "Click here to open applications menu"
+msgstr "Kliknite sem pre ponuky programov"
+
+#: ../plugins/menu.c:1032 ../plugins/menu.c:1054
 msgid "Menu"
 msgstr "Ponuka"
 
-#: ../plugins/menu.c:990 ../plugins/dirmenu.c:359
+#: ../plugins/menu.c:1033 ../plugins/dirmenu.c:359
 msgid "Icon"
 msgstr "Ikona"
 
-#: ../plugins/menu.c:998
+#: ../plugins/menu.c:1034
+msgid "Padding"
+msgstr "Výplň"
+
+#: ../plugins/menu.c:1055
 msgid "Application Menu"
 msgstr "Aplikačné menu"
 
@@ -1001,7 +1035,7 @@ msgid "CPUFreq frontend"
 msgstr "Používateľské rozhranie pre CPUFreq"
 
 #: ../plugins/cpufreq/cpufreq.c:402
-msgid "Display CPU frequency and allow one to change governors and frequency"
+msgid "Display CPU frequency and allow to change governors and frequency"
 msgstr "Zobraziť frekvenciu CPU a povoliť zmenu regulátorov a frekvencie"
 
 #: ../plugins/volumealsa/volumealsa.c:245
@@ -2025,7 +2059,7 @@ msgstr "Dnes: "
 
 #: ../plugins/weather/weatherwidget.c:2293
 msgid "Tomorrow: "
-msgstr "Zajtra:"
+msgstr "Zajtra: "
 
 #: ../plugins/weather/weather.c:415
 msgid "Weather Plugin"

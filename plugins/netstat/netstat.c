@@ -170,7 +170,11 @@ wireless_menu(netdev_info *ni)
 
             /* create a new item */
             menu_item = gtk_menu_item_new();
+#if GTK_CHECK_VERSION(3, 0, 0)
+            item_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+#else
             item_box = gtk_hbox_new(FALSE, 0);
+#endif
 
             /* Encryption */
             if (aps->apinfo->haskey) {
@@ -185,7 +189,12 @@ wireless_menu(netdev_info *ni)
                 essid_label = gtk_label_new(aps->apinfo->essid);
 
             gtk_label_set_justify(GTK_LABEL(essid_label), GTK_JUSTIFY_LEFT);
+#if GTK_CHECK_VERSION(3, 0, 0)
+            gtk_widget_set_margin_start (essid_label, 2);
+            gtk_widget_set_margin_end (essid_label, 2);
+#else
             gtk_misc_set_padding(GTK_MISC(essid_label), 2, 0);
+#endif
             gtk_box_pack_start(GTK_BOX(item_box), essid_label, TRUE, FALSE, 0);
 
             /* Quality */
@@ -241,7 +250,11 @@ static gint menupopup(GtkWidget *widget, GdkEvent *event, netdev_info *ni)
 //        if (event_button->button == 1) {
             /* wireless device */
             if (ni->netdev_list->info.wireless) {
+#if GTK_CHECK_VERSION(3, 0, 0)
+                gtk_menu_popup_at_widget (GTK_MENU(wireless_menu(ni)), widget, GDK_GRAVITY_NORTH_WEST, GDK_GRAVITY_NORTH_WEST, event);
+#else
                 gtk_menu_popup(GTK_MENU(wireless_menu(ni)), NULL, NULL, NULL, NULL, event_button->button, event_button->time);
+#endif
 //            }
             return TRUE;
         } else {
@@ -264,7 +277,11 @@ static gint menupopup(GtkWidget *widget, GdkEvent *event, netdev_info *ni)
 
             gtk_widget_show_all(menu);
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+            gtk_menu_popup_at_widget (GTK_MENU(menu), widget, GDK_GRAVITY_NORTH_WEST, GDK_GRAVITY_NORTH_WEST, event);
+#else
             gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL, event_button->button, event_button->time);
+#endif
             return TRUE;
         }
     }
