@@ -993,6 +993,12 @@ static void reset_timer_on_task(LaunchTaskBarPlugin *tb)
                                          on_gtk_cursor_blink_time_changed, tb);
 }
 
+static gboolean init_flash_timer (gpointer user_data)
+{
+    LaunchTaskBarPlugin *tb = (LaunchTaskBarPlugin *) user_data;
+    set_timer_on_task(tb);
+    return FALSE;
+}
 
 static void launchtaskbar_constructor_task(LaunchTaskBarPlugin *ltbp)
 {
@@ -1053,7 +1059,7 @@ static void launchtaskbar_constructor_task(LaunchTaskBarPlugin *ltbp)
 
         /* Start blinking timeout if configured */
         if (ltbp->flags.use_urgency_hint)
-            set_timer_on_task(ltbp);
+            g_timeout_add (1000, init_flash_timer, ltbp);   // need to delay start due to potential race condition
 
         /* Fetch the client list and redraw the taskbar.  Then determine what window has focus. */
         taskbar_net_client_list(NULL, ltbp);
