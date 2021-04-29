@@ -1059,7 +1059,7 @@ static void launchtaskbar_constructor_task(LaunchTaskBarPlugin *ltbp)
 
         /* Start blinking timeout if configured */
         if (ltbp->flags.use_urgency_hint)
-            g_timeout_add (1000, init_flash_timer, ltbp);   // need to delay start due to potential race condition
+            g_idle_add (init_flash_timer, ltbp);   // need to delay start due to potential race condition
 
         /* Fetch the client list and redraw the taskbar.  Then determine what window has focus. */
         taskbar_net_client_list(NULL, ltbp);
