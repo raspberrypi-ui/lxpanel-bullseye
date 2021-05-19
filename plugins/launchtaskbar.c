@@ -1862,12 +1862,14 @@ static void launchtaskbar_panel_configuration_changed(LXPanel *panel, GtkWidget 
 
     if (ltbp->lb_built)
     {
-        GList *l;
-        for (l = gtk_container_get_children(GTK_CONTAINER(ltbp->lb_icon_grid)); l != NULL; l = l->next)
+        GList *list, *l;
+        list = gtk_container_get_children(GTK_CONTAINER(ltbp->lb_icon_grid));
+        for (l = list; l != NULL; l = l->next)
         {
             LaunchButton *btn = (LaunchButton *) l->data;
             launch_button_update_icon (btn, new_icon_size - ICON_BUTTON_TRIM);
         }
+        g_list_free (list);
         panel_icon_grid_set_geometry(PANEL_ICON_GRID(ltbp->lb_icon_grid),
                                      panel_get_orientation(panel),
                                      new_icon_size, new_icon_size,

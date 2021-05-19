@@ -180,6 +180,7 @@ static void on_menu_item_map(GtkWidget *mi, menup *m)
 #if GTK_CHECK_VERSION(3, 0, 0)
   GList *children = gtk_container_get_children (GTK_CONTAINER (gtk_bin_get_child (GTK_BIN (mi))));
   GtkImage *img = children->data;  // this should always be the image...
+  g_list_free (children);
 #else
   GtkImage* img = GTK_IMAGE(gtk_image_menu_item_get_image(GTK_IMAGE_MENU_ITEM(mi)));
 #endif
@@ -572,13 +573,14 @@ static void _unload_old_icons(GtkMenu* menu, GtkIconTheme* theme, menup* m)
                 GtkWidget *box = gtk_bin_get_child (GTK_BIN (item));
                 if (GTK_IS_BOX (box))
                 {
-                    GList *children = gtk_container_get_children (GTK_CONTAINER (box));
-                    if (GTK_IS_IMAGE (children->data))
+                    GList *bchildren = gtk_container_get_children (GTK_CONTAINER (box));
+                    if (GTK_IS_IMAGE (bchildren->data))
                     {
-                        img = GTK_IMAGE (children->data);
+                        img = GTK_IMAGE (bchildren->data);
                         gtk_image_clear(img);
                         if (gtk_widget_get_mapped (GTK_WIDGET(img))) on_menu_item_map(GTK_WIDGET(item), m);
                     }
+                    g_list_free (bchildren);
                 }
             }
 #else
