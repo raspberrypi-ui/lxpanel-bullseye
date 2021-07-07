@@ -1056,6 +1056,7 @@ static void launchtaskbar_constructor_task(LaunchTaskBarPlugin *ltbp)
 
         /* Connect a signal to be notified when the window manager changes.  This causes re-evaluation of the "use_net_active" status. */
         g_signal_connect(ltbp->screen, "window-manager-changed", G_CALLBACK(taskbar_window_manager_changed), ltbp);
+        ltbp->flags.use_net_active = gdk_x11_screen_supports_net_wm_hint (ltbp->screen, gdk_x11_xatom_to_atom (a_NET_ACTIVE_WINDOW));
 
         /* Start blinking timeout if configured */
         if (ltbp->flags.use_urgency_hint)

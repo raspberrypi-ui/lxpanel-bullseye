@@ -113,6 +113,7 @@ enum {
 static guint signals[N_SIGNALS];
 
 
+static void task_raise_window(TaskButton *tb, TaskDetails *tk, guint32 time);
 static void task_update_icon(TaskButton *task, TaskDetails *details, Atom source);
 
 /* -----------------------------------------------------------------------------
@@ -288,12 +289,7 @@ static void menu_raise_window(GtkWidget * widget, GtkWidget * taskbar)
 {
     TaskButton *tb = get_menu_task_button(taskbar);
     TaskDetails *tk = task_details_lookup(tb, tb->menu_target);
-    Screen *screen = GDK_SCREEN_XSCREEN(gtk_widget_get_screen(widget));
-
-    if ((tk->desktop != ALL_WORKSPACES) && (tk->desktop != tb->desktop))
-        Xclimsgx(screen, RootWindowOfScreen(screen), a_NET_CURRENT_DESKTOP,
-                 tk->desktop, 0, 0, 0, 0);
-    XMapRaised(DisplayOfScreen(screen), tk->win);
+    task_raise_window (tb, tk, GDK_CURRENT_TIME);
 }
 
 /* Handler for maximize/unmaximize. Taken from WNCK */
