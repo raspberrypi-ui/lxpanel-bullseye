@@ -4,7 +4,7 @@
 #include "plugin.h"
 
 
-#define HIDE_TIME_MS 10000
+#define HIDE_TIME_MS 15000
 #define SPACING 5
 
 typedef struct {
@@ -23,9 +23,31 @@ static gboolean hide_message (NotifyWindow *nw)
     return FALSE;
 }
 
+static void update_positions (GList *item, int offset)
+{
+    NotifyWindow *nw;
+    int x, y;
+
+    while (item)
+    {
+        nw = (NotifyWindow *) item->data;
+        gdk_window_get_position (gtk_widget_get_window (nw->popup), &x, &y);
+        gdk_window_move (gtk_widget_get_window (nw->popup), x, y + offset);
+        item = item->next;
+    }
+}
+
 static gboolean notify_window_click (GtkWidget *widget, GdkEventButton *event, NotifyWindow *nw)
 {
+    GList *item;
+    int w, h;
+
+    item = g_list_find (nwins, nw);
+    gtk_window_get_size (GTK_WINDOW (nw->popup), &w, &h);
+    update_positions (item->next, - (h + SPACING));
+
     hide_message (nw);
+
     return FALSE;
 }
 
@@ -65,21 +87,6 @@ static void show_message (LXPanel *panel, GtkWidget *end, NotifyWindow *nw, char
     nw->hide_timer = g_timeout_add (HIDE_TIME_MS, (GSourceFunc) hide_message, nw);
 }
 
-static void update_positions (int offset)
-{
-    NotifyWindow *nw;
-    int x, y;
-    GList *item = nwins->next;
-
-    while (item)
-    {
-        nw = (NotifyWindow *) item->data;
-        gdk_window_get_position (gtk_widget_get_window (nw->popup), &x, &y);
-        gdk_window_move (gtk_widget_get_window (nw->popup), x, y + offset);
-        item = item->next;
-    }
-}
-
 void lxpanel_notify (LXPanel *panel, char *message)
 {
     GList *plugins;
@@ -94,5 +101,5 @@ void lxpanel_notify (LXPanel *panel, char *message)
 
     gtk_window_get_size (GTK_WINDOW (nw->popup), &w, &h);
 
-    update_positions (h + SPACING);
+    update_positions (nwins->next, h + SPACING);
 }
