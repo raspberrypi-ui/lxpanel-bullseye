@@ -4,18 +4,21 @@
 #include "plugin.h"
 
 
-#define HIDE_TIME_MS 5000
+#define HIDE_TIME_MS 10000
+#define SPACING 5
 
 typedef struct {
     GtkWidget *popup;               /* Popup message */
     guint hide_timer;               /* Timer to hide message window */
 } NotifyWindow;
 
+static GList *nwins = NULL;
 
 static gboolean hide_message (NotifyWindow *nw)
 {
     if (nw->hide_timer) g_source_remove (nw->hide_timer);
     if (nw->popup) gtk_widget_destroy (nw->popup);
+    nwins = g_list_remove (nwins, nw);
     g_free (nw);
     return FALSE;
 }
@@ -62,12 +65,34 @@ static void show_message (LXPanel *panel, GtkWidget *end, NotifyWindow *nw, char
     nw->hide_timer = g_timeout_add (HIDE_TIME_MS, (GSourceFunc) hide_message, nw);
 }
 
+static void update_positions (int offset)
+{
+    NotifyWindow *nw;
+    int x, y;
+    GList *item = nwins->next;
+
+    while (item)
+    {
+        nw = (NotifyWindow *) item->data;
+        gdk_window_get_position (gtk_widget_get_window (nw->popup), &x, &y);
+        gdk_window_move (gtk_widget_get_window (nw->popup), x, y + offset);
+        item = item->next;
+    }
+}
+
 void lxpanel_notify (LXPanel *panel, char *message)
 {
     GList *plugins;
+    int w, h;
     NotifyWindow *nw = g_new (NotifyWindow, 1);
+
+    nwins = g_list_prepend (nwins, nw);
 
     plugins = gtk_container_get_children (GTK_CONTAINER (panel->priv->box));
     show_message (panel, (GtkWidget *) (g_list_last (plugins))->data, nw, message);
     g_list_free (plugins);
+
+    gtk_window_get_size (GTK_WINDOW (nw->popup), &w, &h);
+
+    update_positions (h + SPACING);
 }
