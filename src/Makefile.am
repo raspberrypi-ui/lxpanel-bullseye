@@ -33,7 +33,8 @@ liblxpanel_la_SOURCES = \
 	plugin.c \
 	conf.c \
 	space.c \
-	input-button.c
+	input-button.c \
+	notify.c
 
 liblxpanel_la_LDFLAGS = \
 	-no-undefined \

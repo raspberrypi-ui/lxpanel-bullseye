@@ -45,7 +45,8 @@ static const char usage[] =
         "refresh\t\trefresh lxpanel\n"
         "move\t\tmove panel to new monitor\n"
         "exit\t\t\texit lxpanel\n"
-        "command <plugin> <cmd>\tsend a command to a plugin\n\n";
+        "command <plugin> <cmd>\tsend a command to a plugin\n"
+        "notify <message>\tshow a notification message\n\n";
 
 static int get_cmd( const char* cmd )
 {
@@ -65,6 +66,8 @@ static int get_cmd( const char* cmd )
         return LXPANEL_CMD_REFRESH;
     else if( ! strcmp( cmd, "move") )
         return LXPANEL_CMD_MOVE;
+    else if( ! strcmp( cmd, "notify") )
+        return LXPANEL_CMD_NOTIFY;
     return -1;
 }
 
@@ -152,6 +155,23 @@ int main( int argc, char** argv )
             target = (EDGE_NONE << 4) + 0; /* edge: none, monitor: none */
         ev.xclient.data.b[1] = target;
         snprintf(&ev.xclient.data.b[2], 18, "%s\t%s", argv[i], argv[i+1]);
+    }
+
+    if (cmd == LXPANEL_CMD_NOTIFY)
+    {
+        int i = 2;
+        if (argc > 4 && strncmp(argv[2], "--panel=", 8) == 0)
+        {
+            int monitor;
+            int edge = parse_id(argv[2] + 8, &monitor);
+            /* edge: EDGE_NONE ..., monitor: 0 - none, 1...8 - selected */
+            target = ((edge & 0x7) << 4) + (monitor & 0xf);
+            i++;
+        }
+        else
+            target = (EDGE_NONE << 4) + 0; /* edge: none, monitor: none */
+        ev.xclient.data.b[1] = target;
+        snprintf(&ev.xclient.data.b[2], 18, "%s", argv[i]);
     }
 
     XSendEvent(dpy, root, False,

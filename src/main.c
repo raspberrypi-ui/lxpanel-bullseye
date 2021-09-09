@@ -53,6 +53,7 @@
 
 #include "private.h"
 #include "misc.h"
+#include "notify.h"
 
 #include "lxpanelctl.h"
 #include "dbg.h"
@@ -389,6 +390,33 @@ static void process_client_msg ( XClientMessageEvent* ev )
                     init->control(plugin, command);
             } while(0);
             g_free(plugin_type);
+            break;
+        case LXPANEL_CMD_NOTIFY:
+            monitor = (ev->data.b[1] & 0xf) - 1; /* 0 for no monitor */
+            edge = (ev->data.b[1] >> 4) & 0x7;
+            if ((ev->data.b[1] & 0x80) != 0)
+                /* some extension, not supported yet */
+                break;
+            do /* use do{}while(0) to enable break */
+            {
+                LXPanel *p;
+                GSList *l;
+
+                /* find the panel by monitor and edge */
+                for (l = all_panels; l; l = l->next)
+                {
+                    p = (LXPanel*)l->data;
+                    if (p->priv->box == NULL) /* inactive panel */
+                        continue;
+                    if (monitor >= 0 && p->priv->monitor != monitor)
+                        continue;
+                    if (edge == EDGE_NONE || p->priv->edge == edge)
+                        break;
+                }
+                if (l == NULL) /* match not found */
+                    break;
+                lxpanel_notify (p, &ev->data.b[2]);
+            } while(0);
             break;
     }
 }
