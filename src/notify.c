@@ -10,9 +10,11 @@
 typedef struct {
     GtkWidget *popup;               /* Popup message */
     guint hide_timer;               /* Timer to hide message window */
+    unsigned char seq;              /* Sequence number */
 } NotifyWindow;
 
 static GList *nwins = NULL;
+static unsigned char nseq = 0;
 
 static gboolean hide_message (NotifyWindow *nw)
 {
@@ -87,11 +89,14 @@ static void show_message (LXPanel *panel, GtkWidget *end, NotifyWindow *nw, char
     nw->hide_timer = g_timeout_add (HIDE_TIME_MS, (GSourceFunc) hide_message, nw);
 }
 
-void lxpanel_notify (LXPanel *panel, char *message)
+unsigned char lxpanel_notify (LXPanel *panel, char *message)
 {
     GList *plugins;
     int w, h;
     NotifyWindow *nw = g_new (NotifyWindow, 1);
+
+    nseq++;
+    nw->seq = nseq;
 
     nwins = g_list_prepend (nwins, nw);
 
@@ -102,4 +107,27 @@ void lxpanel_notify (LXPanel *panel, char *message)
     gtk_window_get_size (GTK_WINDOW (nw->popup), &w, &h);
 
     update_positions (nwins->next, h + SPACING);
+
+    return nseq;
+}
+
+void lxpanel_notify_clear (unsigned char seq)
+{
+    NotifyWindow *nw;
+    int w, h;
+    GList *item = nwins;
+
+    while (item)
+    {
+        nw = (NotifyWindow *) item->data;
+        if (nw->seq == seq)
+        {
+            gtk_window_get_size (GTK_WINDOW (nw->popup), &w, &h);
+            update_positions (item->next, - (h + SPACING));
+
+            hide_message (nw);
+            return;
+        }
+        item = item->next;
+    }
 }
