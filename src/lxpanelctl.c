@@ -159,8 +159,10 @@ int main( int argc, char** argv )
 
     if (cmd == LXPANEL_CMD_NOTIFY)
     {
+        char tmp[16] = "/tmp/nmsgXXXXXX";
         int i = 2;
-        if (argc > 4 && strncmp(argv[2], "--panel=", 8) == 0)
+        FILE *fp;
+        if (argc > 3 && strncmp(argv[2], "--panel=", 8) == 0)
         {
             int monitor;
             int edge = parse_id(argv[2] + 8, &monitor);
@@ -171,7 +173,16 @@ int main( int argc, char** argv )
         else
             target = (EDGE_NONE << 4) + 0; /* edge: none, monitor: none */
         ev.xclient.data.b[1] = target;
-        snprintf(&ev.xclient.data.b[2], 18, "%s", argv[i]);
+
+        /* need to use mktemp here to create a temp file for the text - yes, I know mktemp is a security risk,
+         * but the worst anyone can do here is to put a rude message in a notification box, so I'm not that
+         * worried... */
+
+        mktemp (tmp);
+        fp = fopen (tmp, "wb");
+        fprintf (fp, "%s", argv[i]);
+        fclose (fp);
+        snprintf (&ev.xclient.data.b[2], 16, "%s", tmp);
     }
 
     XSendEvent(dpy, root, False,

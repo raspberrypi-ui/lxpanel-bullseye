@@ -53,7 +53,7 @@
 
 #include "private.h"
 #include "misc.h"
-#include "notify.h"
+#include "plugin.h"
 
 #include "lxpanelctl.h"
 #include "dbg.h"
@@ -401,6 +401,9 @@ static void process_client_msg ( XClientMessageEvent* ev )
             {
                 LXPanel *p;
                 GSList *l;
+                size_t siz;
+                FILE *fp;
+                char *buf;
 
                 /* find the panel by monitor and edge */
                 for (l = all_panels; l; l = l->next)
@@ -415,7 +418,13 @@ static void process_client_msg ( XClientMessageEvent* ev )
                 }
                 if (l == NULL) /* match not found */
                     break;
-                lxpanel_notify (p, &ev->data.b[2]);
+
+                buf = NULL;
+                fp = fopen (&ev->data.b[2], "rb");
+                getdelim (&buf, &siz, 0, fp);
+                fclose (fp);
+                lxpanel_notify (p, buf);
+                free (buf);
             } while(0);
             break;
     }

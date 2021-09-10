@@ -57,6 +57,7 @@ static void show_message (LXPanel *panel, GtkWidget *end, NotifyWindow *nw, char
 {
     GtkWidget *box, *item;
     gint x, y;
+    char *fmt;
 
     /*
      * In order to get a window which looks exactly like a system tooltip, client-side decoration
@@ -76,7 +77,9 @@ static void show_message (LXPanel *panel, GtkWidget *end, NotifyWindow *nw, char
     box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 5);
     gtk_container_add (GTK_CONTAINER (nw->popup), box);
 
-    item = gtk_label_new (str);
+    fmt = g_strcompress (str);
+    item = gtk_label_new (fmt);
+    g_free (fmt);
     gtk_box_pack_start (GTK_BOX (box), item, FALSE, FALSE, 0);
 
     gtk_widget_show_all (nw->popup);
