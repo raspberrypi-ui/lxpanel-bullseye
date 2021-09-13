@@ -85,7 +85,8 @@ static void show_message (LXPanel *panel, GtkWidget *end, NotifyWindow *nw, char
     gtk_widget_show_all (nw->popup);
     gtk_widget_hide (nw->popup);
     lxpanel_plugin_popup_set_position_helper (panel, end, nw->popup, &x, &y);
-    gdk_window_move (gtk_widget_get_window (nw->popup), x, y);
+    if (panel->priv->edge == EDGE_BOTTOM) gdk_window_move (gtk_widget_get_window (nw->popup), x, SPACING);
+    else gdk_window_move (gtk_widget_get_window (nw->popup), x, y);
     gdk_window_set_events (gtk_widget_get_window (nw->popup), gdk_window_get_events (gtk_widget_get_window (nw->popup)) | GDK_BUTTON_PRESS_MASK);
     g_signal_connect (G_OBJECT (nw->popup), "button-press-event", G_CALLBACK (notify_window_click), nw);
     gtk_window_present (GTK_WINDOW (nw->popup));
