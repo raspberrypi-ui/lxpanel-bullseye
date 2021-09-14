@@ -33,7 +33,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /* Macros and typedefs */
 /*----------------------------------------------------------------------------*/
 
-#define HIDE_TIME_MS 15000
 #define SPACING 5
 
 typedef struct {
@@ -111,7 +110,7 @@ static void show_message (LXPanel *panel, NotifyWindow *nw, char *str)
     gdk_window_set_events (gtk_widget_get_window (nw->popup), gdk_window_get_events (gtk_widget_get_window (nw->popup)) | GDK_BUTTON_PRESS_MASK);
     g_signal_connect (G_OBJECT (nw->popup), "button-press-event", G_CALLBACK (window_click), nw);
     gtk_window_present (GTK_WINDOW (nw->popup));
-    nw->hide_timer = g_timeout_add (HIDE_TIME_MS, (GSourceFunc) hide_message, nw);
+    if (panel->priv->notify_timeout > 0) nw->hide_timer = g_timeout_add (panel->priv->notify_timeout * 1000, (GSourceFunc) hide_message, nw);
 }
 
 /* Destroy a notification window and remove from list */

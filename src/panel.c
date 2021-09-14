@@ -622,6 +622,7 @@ static void lxpanel_init(PanelToplevel *self)
     p->defstyle = gtk_widget_get_default_style();
 #endif
     p->point_at_menu = 0;
+    p->notify_timeout = 15;
 }
 
 /* Allocate and initialize new Panel structure. */
@@ -2196,6 +2197,8 @@ panel_parse_global(Panel *p, config_setting_t *cfg)
         p->autohide = i != 0;
     if (config_setting_lookup_int(cfg, "point_at_menu", &i))
         p->point_at_menu = i != 0;
+    if (config_setting_lookup_int(cfg, "notify_timeout", &i))
+        p->notify_timeout = i;
     if (config_setting_lookup_int(cfg, "heightwhenhidden", &i))
         p->height_when_hidden = MAX(0, i);
     if (config_setting_lookup_string(cfg, "tintcolor", &str))
