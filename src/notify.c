@@ -40,6 +40,7 @@ typedef struct {
     GtkWidget *popup;               /* Popup message window*/
     guint hide_timer;               /* Timer to hide message window */
     unsigned char seq;              /* Sequence number */
+    guint hash;                     /* Hash of message string */
 } NotifyWindow;
 
 
@@ -175,6 +176,28 @@ unsigned char lxpanel_notify (LXPanel *panel, char *message)
 {
     NotifyWindow *nw;
     int w, h;
+    GList *item = nwins;
+
+    // check to see if this notification is already in the list - just bump it to the top if so...
+    guint hash = g_str_hash (message);
+
+    // loop through windows in the list, looking for the hash
+    while (item)
+    {
+        nw = (NotifyWindow *) item->data;
+
+        // hash matches
+        if (nw->hash == hash)
+        {
+            // shuffle notifications below up
+            gtk_window_get_size (GTK_WINDOW (nw->popup), &w, &h);
+            update_positions (item->next, - (h + SPACING));
+
+            // hide the window
+            hide_message (nw);
+        }
+        item = item->next;
+    }
 
     // create a new notification window and add it to the front of the list
     nw = g_new (NotifyWindow, 1);
@@ -183,6 +206,7 @@ unsigned char lxpanel_notify (LXPanel *panel, char *message)
     // set the sequence number for this notification
     nseq++;
     nw->seq = nseq;
+    nw->hash = hash;
 
     // show the window
     show_message (panel, nw, message);
