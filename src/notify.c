@@ -33,6 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /* Macros and typedefs */
 /*----------------------------------------------------------------------------*/
 
+#define TEXT_WIDTH 40
 #define SPACING 5
 
 typedef struct {
@@ -70,7 +71,7 @@ static void show_message (LXPanel *panel, NotifyWindow *nw, char *str)
     GtkWidget *box, *item;
     GList *plugins;
     gint x, y;
-    char *fmt;
+    char *fmt, *cptr;
 
     /*
      * In order to get a window which looks exactly like a system tooltip, client-side decoration
@@ -91,9 +92,19 @@ static void show_message (LXPanel *panel, NotifyWindow *nw, char *str)
     gtk_container_add (GTK_CONTAINER (nw->popup), box);
 
     fmt = g_strcompress (str);
+
+    // setting gtk_label_set_max_width_chars looks awful, so we have to do this...
+    cptr = fmt;
+    x = 0;
+    while (*cptr)
+    {
+        if (*cptr == ' ' && x >= TEXT_WIDTH) *cptr = '\n';
+        if (*cptr == '\n') x = 0;
+        cptr++;
+        x++;
+    }
+
     item = gtk_label_new (fmt);
-    gtk_label_set_line_wrap (GTK_LABEL (item), TRUE);
-    gtk_label_set_max_width_chars (GTK_LABEL (item), 50);
     gtk_label_set_justify (GTK_LABEL (item), GTK_JUSTIFY_CENTER);
     gtk_box_pack_start (GTK_BOX (box), item, FALSE, FALSE, 0);
     g_free (fmt);
