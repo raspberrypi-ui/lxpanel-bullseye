@@ -93,6 +93,9 @@ static void show_message (LXPanel *panel, NotifyWindow *nw, char *str)
 
     fmt = g_strcompress (str);
     item = gtk_label_new (fmt);
+    gtk_label_set_line_wrap (GTK_LABEL (item), TRUE);
+    gtk_label_set_max_width_chars (GTK_LABEL (item), 50);
+    gtk_label_set_justify (GTK_LABEL (item), GTK_JUSTIFY_CENTER);
     gtk_box_pack_start (GTK_BOX (box), item, FALSE, FALSE, 0);
     g_free (fmt);
 
