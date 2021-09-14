@@ -683,7 +683,7 @@ void lxpanel_plugin_update_menu_icon (GtkWidget *item, GtkWidget *image)
 void lxpanel_plugin_append_menu_icon (GtkWidget *item, GtkWidget *image)
 {
     GtkWidget *box = gtk_bin_get_child (GTK_BIN (item));
-    gtk_box_pack_start (GTK_BOX (box), image, FALSE, FALSE, 0);
+    gtk_box_pack_end (GTK_BOX (box), image, FALSE, FALSE, 0);
 }
 
 const char *lxpanel_plugin_get_menu_label (GtkWidget *item)
