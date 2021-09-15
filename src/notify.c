@@ -176,6 +176,9 @@ unsigned int lxpanel_notify (LXPanel *panel, char *message)
     GList *item;
     int w, h;
 
+    // check for notifications being disabled
+    if (!panel->priv->notifications) return 0;
+
     // check to see if this notification is already in the list - just bump it to the top if so...
     guint hash = g_str_hash (message);
 

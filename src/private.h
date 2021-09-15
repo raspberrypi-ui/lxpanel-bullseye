@@ -126,7 +126,9 @@ struct _Panel {
     guint background : 1;
     guint spacing;
     guint point_at_menu : 1;
+
     guint notify_timeout;
+    guint notifications : 1;
 
     guint autohide : 1;
     guint visible : 1;
