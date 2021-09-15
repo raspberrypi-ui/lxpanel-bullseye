@@ -39,7 +39,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 typedef struct {
     GtkWidget *popup;               /* Popup message window*/
     guint hide_timer;               /* Timer to hide message window */
-    unsigned char seq;              /* Sequence number */
+    unsigned int seq;               /* Sequence number */
     guint hash;                     /* Hash of message string */
 } NotifyWindow;
 
@@ -49,8 +49,7 @@ typedef struct {
 /*----------------------------------------------------------------------------*/
 
 static GList *nwins = NULL;         /* List of current notifications */
-static unsigned char nseq = 0;      /* Sequence number for notifications */
-
+static unsigned int nseq = 0;       /* Sequence number for notifications */
 
 /*----------------------------------------------------------------------------*/
 /* Function prototypes */
@@ -129,6 +128,14 @@ static void show_message (LXPanel *panel, NotifyWindow *nw, char *str)
 
 static gboolean hide_message (NotifyWindow *nw)
 {
+    GList *item;
+    int w, h;
+
+    // shuffle notifications below up
+    item = g_list_find (nwins, nw);
+    gtk_window_get_size (GTK_WINDOW (nw->popup), &w, &h);
+    update_positions (item->next, - (h + SPACING));
+
     if (nw->hide_timer) g_source_remove (nw->hide_timer);
     if (nw->popup) gtk_widget_destroy (nw->popup);
     nwins = g_list_remove (nwins, nw);
@@ -143,12 +150,11 @@ static void update_positions (GList *item, int offset)
     NotifyWindow *nw;
     int x, y;
 
-    while (item)
+    for (; item != NULL; item = item->next)
     {
         nw = (NotifyWindow *) item->data;
         gdk_window_get_position (gtk_widget_get_window (nw->popup), &x, &y);
         gdk_window_move (gtk_widget_get_window (nw->popup), x, y + offset);
-        item = item->next;
     }
 }
 
@@ -156,15 +162,7 @@ static void update_positions (GList *item, int offset)
 
 static gboolean window_click (GtkWidget *widget, GdkEventButton *event, NotifyWindow *nw)
 {
-    GList *item;
-    int w, h;
-
-    item = g_list_find (nwins, nw);
-    gtk_window_get_size (GTK_WINDOW (nw->popup), &w, &h);
-    update_positions (item->next, - (h + SPACING));
-
     hide_message (nw);
-
     return FALSE;
 }
 
@@ -172,31 +170,21 @@ static gboolean window_click (GtkWidget *widget, GdkEventButton *event, NotifyWi
 /* Public API */
 /*----------------------------------------------------------------------------*/
 
-unsigned char lxpanel_notify (LXPanel *panel, char *message)
+unsigned int lxpanel_notify (LXPanel *panel, char *message)
 {
     NotifyWindow *nw;
+    GList *item;
     int w, h;
-    GList *item = nwins;
 
     // check to see if this notification is already in the list - just bump it to the top if so...
     guint hash = g_str_hash (message);
 
     // loop through windows in the list, looking for the hash
-    while (item)
+    for (item = nwins; item != NULL; item = item->next)
     {
+        // if hash matches, hide the window
         nw = (NotifyWindow *) item->data;
-
-        // hash matches
-        if (nw->hash == hash)
-        {
-            // shuffle notifications below up
-            gtk_window_get_size (GTK_WINDOW (nw->popup), &w, &h);
-            update_positions (item->next, - (h + SPACING));
-
-            // hide the window
-            hide_message (nw);
-        }
-        item = item->next;
+        if (nw->hash == hash) hide_message (nw);
     }
 
     // create a new notification window and add it to the front of the list
@@ -218,29 +206,21 @@ unsigned char lxpanel_notify (LXPanel *panel, char *message)
     return nseq;
 }
 
-void lxpanel_notify_clear (unsigned char seq)
+void lxpanel_notify_clear (unsigned int seq)
 {
     NotifyWindow *nw;
-    int w, h;
-    GList *item = nwins;
+    GList *item;
 
     // loop through windows in the list, looking for the sequence number
-    while (item)
+    for (item = nwins; item != NULL; item = item->next)
     {
+        // if sequence number matches, hide the window
         nw = (NotifyWindow *) item->data;
-
-        // sequence number matches
         if (nw->seq == seq)
         {
-            // shuffle notifications below up
-            gtk_window_get_size (GTK_WINDOW (nw->popup), &w, &h);
-            update_positions (item->next, - (h + SPACING));
-
-            // hide the window
             hide_message (nw);
             return;
         }
-        item = item->next;
     }
 }
 
