@@ -160,6 +160,8 @@ struct _Panel {
     GtkWidget* edge_top_button;
     GtkWidget* edge_left_button;
     GtkWidget* edge_right_button;
+    GtkWidget* notifications_check;
+    GtkWidget* notifications_spin;
 
     guint initialized : 1;              /* Should be grouped better later, */
     guint ah_far : 1;                   /* placed here for binary compatibility */

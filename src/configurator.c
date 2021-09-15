@@ -187,6 +187,23 @@ static void edge_right_toggle(GtkToggleButton *widget, LXPanel *p)
         set_edge(p, EDGE_RIGHT);
 }
 
+static void notif_toggle (GtkToggleButton *widget, LXPanel *panel)
+{
+    Panel *p = panel->priv;
+    if (gtk_toggle_button_get_active (widget)) p->notifications = 1;
+    else p->notifications = 0;
+    gtk_widget_set_sensitive (p->notifications_spin, p->notifications);
+    UPDATE_GLOBAL_INT (p, "notifications", p->notifications);
+}
+
+static void notif_timeout (GtkSpinButton* spin, LXPanel* panel)
+{
+    Panel *p = panel->priv;
+    p->notify_timeout = (int) gtk_spin_button_get_value (spin);
+    UPDATE_GLOBAL_INT (p, "notify_timeout", p->notify_timeout);
+}
+
+
 /* only for old UI file, safe fallback */
 static void set_monitor(GtkSpinButton *widget, LXPanel *panel)
 {
@@ -1236,6 +1253,15 @@ void panel_configure( LXPanel* panel, int sel_page )
     gtk_widget_set_sensitive(p->margin_control, (p->align != ALIGN_CENTER));
     g_signal_connect( w, "value-changed",
                       G_CALLBACK(set_margin), panel);
+
+    /* notifications */
+    p->notifications_check = w = (GtkWidget*) gtk_builder_get_object (builder, "notifications");
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w), p->notifications);
+    g_signal_connect (w, "toggled", G_CALLBACK (notif_toggle), panel);
+    p->notifications_spin = w = (GtkWidget*) gtk_builder_get_object (builder, "timeout");
+    gtk_spin_button_set_value (GTK_SPIN_BUTTON (w), p->notify_timeout);
+    gtk_widget_set_sensitive (p->notifications_spin, p->notifications);
+    g_signal_connect (w, "value-changed", G_CALLBACK (notif_timeout), panel);
 
     /* size */
     p->width_label = (GtkWidget*)gtk_builder_get_object( builder, "width_label");
