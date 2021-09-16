@@ -196,6 +196,7 @@ unsigned int lxpanel_notify (LXPanel *panel, char *message)
 
     // set the sequence number for this notification
     nseq++;
+    if (nseq == -1) nseq++;     // use -1 for invalid sequence code
     nw->seq = nseq;
     nw->hash = hash;
 
