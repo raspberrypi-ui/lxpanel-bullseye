@@ -1288,6 +1288,14 @@ panel_popupmenu_configure(GtkWidget *widget, gpointer user_data)
     return TRUE;
 }
 
+static gint
+panel_popupmenu_appearance(GtkWidget *widget, gpointer user_data)
+{
+    char *args[5] = { "/usr/bin/env", "SUDO_ASKPASS=/usr/lib/pipanel/pwdpip.sh", "/usr/bin/pipanel", "-3", NULL };
+    g_spawn_async (PACKAGE_DATA_DIR, args, NULL, 0, NULL, NULL, NULL, NULL);
+    return TRUE;
+}
+
 static void panel_popupmenu_config_plugin( GtkMenuItem* item, GtkWidget* plugin )
 {
     Panel *panel = PLUGIN_PANEL(plugin)->priv;
@@ -1677,6 +1685,16 @@ GtkMenu* lxpanel_get_plugin_menu( LXPanel* panel, GtkWidget* plugin, gboolean us
 #endif
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_item);
     g_signal_connect(G_OBJECT(menu_item), "activate", G_CALLBACK(panel_popupmenu_configure), panel );
+
+#if GTK_CHECK_VERSION(3, 0, 0)
+    menu_item = gtk_menu_item_new_with_label(_("Panel Appearance"));
+#else
+    img = gtk_image_new_from_stock( GTK_STOCK_PREFERENCES, GTK_ICON_SIZE_MENU );
+    menu_item = gtk_image_menu_item_new_with_label(_("Panel Appearance"));
+    gtk_image_menu_item_set_image( (GtkImageMenuItem*)menu_item, img );
+#endif
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_item);
+    g_signal_connect(G_OBJECT(menu_item), "activate", G_CALLBACK(panel_popupmenu_appearance), panel );
 
 #if GTK_CHECK_VERSION(3, 0, 0)
     menu_item = gtk_menu_item_new_with_label(_("Create New Panel"));

@@ -1338,7 +1338,7 @@ void panel_configure( LXPanel* panel, int sel_page )
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), p->height_when_hidden);
     g_signal_connect( w, "value-changed",
                       G_CALLBACK(set_height_when_minimized), panel);
-
+#if 0
     /* transparancy */
     tint_clr = w = (GtkWidget*)gtk_builder_get_object( builder, "tint_clr" );
 #if GTK_CHECK_VERSION(3, 0, 0)
@@ -1421,7 +1421,7 @@ void panel_configure( LXPanel* panel, int sel_page )
     g_signal_connect(w2, "toggled", G_CALLBACK(on_use_font_size_toggled), panel);
     if( ! p->usefontsize )
         gtk_widget_set_sensitive( w, FALSE );
-
+#endif
     /* plugin list */
     {
         GtkWidget* plugin_list = (GtkWidget*)gtk_builder_get_object( builder, "plugin_list" );
