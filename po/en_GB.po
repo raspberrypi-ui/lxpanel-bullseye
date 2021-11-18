@@ -115,12 +115,12 @@ msgid "Desktop panel for LXDE project"
 msgstr "Desktop panel for LXDE project"
 
 #: ../src/panel.c:1622 ../src/panel.c:1628
-msgid "\"%s\" Settings"
-msgstr "\"%s\" Settings"
+msgid "%s Settings"
+msgstr "%s Settings..."
 
 #: ../src/panel.c:1650 ../src/panel.c:1653
 msgid "Add / Remove Panel Items"
-msgstr "Add / Remove Panel Items"
+msgstr "Add / Remove Panel Items..."
 
 #: ../src/panel.c:1662 ../src/panel.c:1667
 #, c-format
@@ -129,11 +129,11 @@ msgstr "Remove \"%s\" From Panel"
 
 #: ../src/panel.c:1680 ../src/panel.c:1683
 msgid "Panel Settings"
-msgstr "Panel Settings"
+msgstr "Panel Settings..."
 
 #: ../src/panel.c:1690 ../src/panel.c:1693
 msgid "Panel Appearance"
-msgstr "Panel Appearance"
+msgstr "Panel Appearance..."
 
 #: ../src/panel.c:1700 ../src/panel.c:1703
 msgid "Create New Panel"
