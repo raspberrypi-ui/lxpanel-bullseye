@@ -1422,9 +1422,16 @@ GtkWidget *lxpanel_button_new_for_icon(LXPanel *panel, const gchar *name, GdkRGB
 GtkWidget *lxpanel_button_new_for_icon(LXPanel *panel, const gchar *name, GdkColor *color, const gchar *label)
 #endif
 {
-    gulong highlight_color = color ? gcolor2rgb24(color) : PANEL_ICON_HIGHLIGHT;
-    return _lxpanel_button_new_for_icon(panel, fm_icon_from_name(name), -1,
-                                        highlight_color, label);
+    GtkWidget *button = gtk_button_new ();
+    gtk_button_set_relief (GTK_BUTTON (button), GTK_RELIEF_NONE);
+    gtk_widget_add_events (button, GDK_BUTTON_PRESS_MASK);
+
+    GtkWidget *icon = gtk_image_new ();
+    lxpanel_plugin_set_taskbar_icon (panel, icon, name);
+    gtk_widget_set_visible (icon, TRUE);
+    gtk_container_add (GTK_CONTAINER (button), icon);
+
+    return button;
 }
 
 #if GTK_CHECK_VERSION(3, 0, 0)
