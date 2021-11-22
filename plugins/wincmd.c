@@ -41,6 +41,7 @@ typedef enum {
 
 /* Private context for window command plugin. */
 typedef struct {
+    LXPanel *panel;                 /* Back pointer to panel */
     config_setting_t *settings;			/* Settings array */
     char * image;				/* Main icon */
     WindowCommand button_1_command;		/* Command for mouse button 1 */
@@ -200,6 +201,7 @@ static GtkWidget *wincmd_constructor(LXPanel *panel, config_setting_t *settings)
 
     /* Save construction pointers */
     wc->settings = settings;
+    wc->panel = panel;
 
     /* Allocate top level widget and set into Plugin widget pointer. */
     p = lxpanel_button_new_for_icon(panel, wc->image, NULL, NULL);
@@ -249,6 +251,13 @@ static GtkWidget *wincmd_configure(LXPanel *panel, GtkWidget *p)
         NULL);
 }
 
+/* Handler for system config changed message from panel */
+static void wincmd_reconfig (LXPanel *panel, GtkWidget *widget)
+{
+    WinCmdPlugin *wc = lxpanel_plugin_get_data (widget);
+
+    lxpanel_plugin_set_taskbar_icon (wc->panel, gtk_button_get_image (GTK_BUTTON (widget)), (wc->image != NULL) ? wc->image : "window-manager");
+}
 
 /* Plugin descriptor. */
 LXPanelPluginInit lxpanel_static_plugin_wincmd = {
@@ -257,5 +266,6 @@ LXPanelPluginInit lxpanel_static_plugin_wincmd = {
 
     .new_instance = wincmd_constructor,
     .config = wincmd_configure,
-    .button_press_event = wincmd_button_clicked
+    .button_press_event = wincmd_button_clicked,
+    .reconfigure = wincmd_reconfig
 };

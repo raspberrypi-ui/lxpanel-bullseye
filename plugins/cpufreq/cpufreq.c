@@ -45,6 +45,7 @@
 
 typedef struct {
     GtkWidget *main;
+    LXPanel *panel;                 /* Back pointer to panel */
     config_setting_t *settings;
     GList *governors;
     GList *cpus;
@@ -347,6 +348,7 @@ static GtkWidget *cpufreq_constructor(LXPanel *panel, config_setting_t *settings
     cf->governors = NULL;
     cf->cpus = NULL;
     cf->settings = settings;
+    cf->panel = panel;
 
     cf->main = lxpanel_button_new_for_icon(panel, PROC_ICON, NULL, NULL);
     lxpanel_plugin_set_data(cf->main, cf, cpufreq_destructor);
@@ -394,6 +396,14 @@ cpufreq_destructor(gpointer user_data)
 }
 
 
+/* Handler for system config changed message from panel */
+static void cpufreq_reconfig (LXPanel *panel, GtkWidget *widget)
+{
+    cpufreq *cf = lxpanel_plugin_get_data (widget);
+
+    lxpanel_plugin_set_taskbar_icon (cf->panel, gtk_button_get_image (GTK_BUTTON (widget)), PROC_ICON);
+}
+
 FM_DEFINE_MODULE(lxpanel_gtk, cpufreq)
 
 /* Plugin descriptor. */
@@ -403,5 +413,6 @@ LXPanelPluginInit fm_module_init_lxpanel_gtk = {
 
     .new_instance = cpufreq_constructor,
     //.config      = config,
-    .button_press_event = clicked
+    .button_press_event = clicked,
+    .reconfigure = cpufreq_reconfig
 };

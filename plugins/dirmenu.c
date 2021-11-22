@@ -361,7 +361,7 @@ static gboolean dirmenu_apply_configuration(gpointer user_data)
     config_group_set_string(dm->settings, "name", dm->name);
     config_group_set_string(dm->settings, "image", dm->image);
 
-    lxpanel_button_set_icon(p, ((dm->image != NULL) ? dm->image : "file-manager"), -1);
+    lxpanel_plugin_set_taskbar_icon (dm->panel, p, (dm->image != NULL) ? dm->image : "file-manager");
     lxpanel_button_set_label(p, dm->name);
 
     gtk_widget_set_tooltip_text(p, dm->path);
@@ -380,6 +380,14 @@ static GtkWidget *dirmenu_configure(LXPanel *panel, GtkWidget *p)
         NULL);
 }
 
+/* Handler for system config changed message from panel */
+static void dirmenu_reconfig (LXPanel *panel, GtkWidget *widget)
+{
+    DirMenuPlugin *dm = lxpanel_plugin_get_data (widget);
+
+    lxpanel_plugin_set_taskbar_icon (dm->panel, gtk_button_get_image (GTK_BUTTON (widget)), (dm->image != NULL) ? dm->image : "file-manager");
+}
+
 /* Plugin descriptor. */
 LXPanelPluginInit lxpanel_static_plugin_dirmenu = {
     .name = N_("Directory Menu"),
@@ -387,5 +395,6 @@ LXPanelPluginInit lxpanel_static_plugin_dirmenu = {
 
     .new_instance = dirmenu_constructor,
     .config = dirmenu_configure,
-    .button_press_event = dirmenu_button_press_event
+    .button_press_event = dirmenu_button_press_event,
+    .reconfigure = dirmenu_reconfig
 };
