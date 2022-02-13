@@ -441,6 +441,7 @@ static void trayclient_request_dock(TrayPlugin * tr, XClientMessageEvent * xeven
 
     /* Add the socket to the icon grid. */
     gtk_container_add(GTK_CONTAINER(tr->plugin), tc->socket);
+    panel_icon_grid_reorder_child(tr->plugin, tc->socket, 0);
     gtk_widget_show(tc->socket);
 
     /* Connect the socket to the plug.  This can only be done after the socket is realized. */
