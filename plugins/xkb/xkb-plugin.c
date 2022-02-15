@@ -1244,7 +1244,7 @@ static GtkWidget *xkb_configure(LXPanel *panel, GtkWidget *p)
 #else
         GTK_STOCK_CLOSE,
 #endif
-        GTK_RESPONSE_OK,
+        GTK_RESPONSE_CLOSE,
         NULL);
     p_xkb->p_dialog_config = GTK_WINDOW(dlg);
     panel_apply_icon(p_xkb->p_dialog_config);
