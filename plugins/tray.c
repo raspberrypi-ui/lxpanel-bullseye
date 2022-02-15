@@ -98,9 +98,22 @@ static void balloon_message_remove(TrayPlugin * tr, Window window, gboolean all_
 static void tray_unmanage_selection(TrayPlugin * tr);
 static void tray_destructor(gpointer user_data);
 
+
+
+static void hide_item (GtkWidget *wid, gpointer ptr)
+{
+    gtk_widget_hide (wid);
+}
+
+static void show_item (GtkWidget *wid, gpointer ptr)
+{
+    gtk_widget_show (wid);
+}
+
 static gboolean restore (gpointer data)
 {
     TrayPlugin *tr = (TrayPlugin *) data;
+    gtk_container_foreach (GTK_CONTAINER (tr->plugin), show_item, NULL);
     panel_icon_grid_set_geometry (PANEL_ICON_GRID (tr->grid), panel_get_orientation (tr->panel),
         panel_get_icon_size (tr->panel), panel_get_icon_size (tr->panel), 3, 0, panel_get_height (tr->panel));
     return FALSE;
@@ -109,9 +122,10 @@ static gboolean restore (gpointer data)
 static gboolean redraw (gpointer data)
 {
     TrayPlugin *tr = (TrayPlugin *) data;
+    gtk_container_foreach (GTK_CONTAINER (tr->plugin), hide_item, NULL);
     panel_icon_grid_set_geometry (PANEL_ICON_GRID (tr->grid), panel_get_orientation (tr->panel),
         0, 0, 3, 0, panel_get_height (tr->panel));
-    g_idle_add (restore, tr);
+    g_timeout_add (50, restore, tr);
     return FALSE;
 }
 
@@ -179,7 +193,7 @@ static void client_delete(TrayPlugin * tr, TrayClient * tc, gboolean unlink, gbo
     /* Deallocate the client structure. */
     g_free(tc);
 
-    redraw (tr);
+    g_timeout_add (100, redraw, tr);
 }
 
 /*** Balloon message display ***/
@@ -487,7 +501,7 @@ static void trayclient_request_dock(TrayPlugin * tr, XClientMessageEvent * xeven
         tc_pred->client_flink = tc;
     }
 
-    redraw (tr);
+    g_timeout_add (100, redraw, tr);
 }
 
 /* GDK event filter. */
