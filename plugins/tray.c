@@ -89,6 +89,7 @@ typedef struct _tray_plugin {
     GtkWidget * invisible;			/* Invisible window that holds manager selection */
     Window invisible_window;			/* X window ID of invisible window */
     GdkAtom selection_atom;			/* Atom for _NET_SYSTEM_TRAY_S%d */
+    GtkWidget *grid;
 } TrayPlugin;
 
 static void balloon_message_display(TrayPlugin * tr, BalloonMessage * msg);
@@ -96,6 +97,23 @@ static void balloon_incomplete_message_remove(TrayPlugin * tr, Window window, gb
 static void balloon_message_remove(TrayPlugin * tr, Window window, gboolean all_ids, long id);
 static void tray_unmanage_selection(TrayPlugin * tr);
 static void tray_destructor(gpointer user_data);
+
+static gboolean restore (gpointer data)
+{
+    TrayPlugin *tr = (TrayPlugin *) data;
+    panel_icon_grid_set_geometry (PANEL_ICON_GRID (tr->grid), panel_get_orientation (tr->panel),
+        panel_get_icon_size (tr->panel), panel_get_icon_size (tr->panel), 3, 0, panel_get_height (tr->panel));
+    return FALSE;
+}
+
+static gboolean redraw (gpointer data)
+{
+    TrayPlugin *tr = (TrayPlugin *) data;
+    panel_icon_grid_set_geometry (PANEL_ICON_GRID (tr->grid), panel_get_orientation (tr->panel),
+        0, 0, 3, 0, panel_get_height (tr->panel));
+    g_idle_add (restore, tr);
+    return FALSE;
+}
 
 /* Look up a client in the client list. */
 static TrayClient * client_lookup(TrayPlugin * tr, Window window)
@@ -160,6 +178,8 @@ static void client_delete(TrayPlugin * tr, TrayClient * tc, gboolean unlink, gbo
 
     /* Deallocate the client structure. */
     g_free(tc);
+
+    redraw (tr);
 }
 
 /*** Balloon message display ***/
@@ -440,7 +460,7 @@ static void trayclient_request_dock(TrayPlugin * tr, XClientMessageEvent * xeven
     tc->socket = gtk_socket_new();
 
     /* Add the socket to the icon grid. */
-    gtk_container_add(GTK_CONTAINER(tr->plugin), tc->socket);
+    gtk_container_add(GTK_CONTAINER(tr->grid), tc->socket);
     gtk_widget_show(tc->socket);
 
     /* Connect the socket to the plug.  This can only be done after the socket is realized. */
@@ -466,6 +486,8 @@ static void trayclient_request_dock(TrayPlugin * tr, XClientMessageEvent * xeven
         tc->client_flink = tc_pred->client_flink;
         tc_pred->client_flink = tc;
     }
+
+    redraw (tr);
 }
 
 /* GDK event filter. */
@@ -641,14 +663,18 @@ static GtkWidget *tray_constructor(LXPanel *panel, config_setting_t *settings)
     tr->invisible_window = GDK_WINDOW_XID(gtk_widget_get_window(invisible));
 
     /* Allocate top level widget and set into Plugin widget pointer. */
-    tr->plugin = p = panel_icon_grid_new(panel_get_orientation(panel),
+    tr->plugin = p = panel_box_new (panel, FALSE, 5);
+    /* Allocate an icon grid manager to manage the container. */
+    tr->grid = panel_icon_grid_new (panel_get_orientation(panel),
                                          panel_get_icon_size(panel),
                                          panel_get_icon_size(panel),
                                          3, 0, panel_get_height(panel));
-    gtk_widget_set_direction (tr->plugin, GTK_TEXT_DIR_RTL);
+    gtk_box_pack_start (GTK_BOX (p), tr->grid, FALSE, TRUE, 0);
+    gtk_widget_show_all (tr->plugin);
     lxpanel_plugin_set_data(p, tr, tray_destructor);
     gtk_widget_set_name(p, "tray");
     panel_icon_grid_set_aspect_width(PANEL_ICON_GRID(p), TRUE);
+    g_idle_add (redraw, tr);
 
     return p;
 }
@@ -686,11 +712,13 @@ static void tray_destructor(gpointer user_data)
 /* Callback when panel configuration changes. */
 static void tray_panel_configuration_changed(LXPanel *panel, GtkWidget *p)
 {
+    TrayPlugin *tp = lxpanel_plugin_get_data(p);
     /* Set orientation into the icon grid. */
-    panel_icon_grid_set_geometry(PANEL_ICON_GRID(p), panel_get_orientation(panel),
+    panel_icon_grid_set_geometry(PANEL_ICON_GRID(tp->grid), panel_get_orientation(panel),
                                  panel_get_icon_size(panel),
                                  panel_get_icon_size(panel),
                                  3, 0, panel_get_height(panel));
+    redraw (tp);
 }
 
 /* Plugin descriptor. */
