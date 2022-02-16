@@ -100,32 +100,21 @@ static void tray_destructor(gpointer user_data);
 
 
 
-static void hide_item (GtkWidget *wid, gpointer ptr)
-{
-    gtk_widget_hide (wid);
-}
-
-static void show_item (GtkWidget *wid, gpointer ptr)
-{
-    gtk_widget_show (wid);
-}
-
-static gboolean restore (gpointer data)
+static void restore (GtkWidget *wid, GtkAllocation *alloc, gpointer data)
 {
     TrayPlugin *tr = (TrayPlugin *) data;
-    gtk_container_foreach (GTK_CONTAINER (tr->plugin), show_item, NULL);
+    g_signal_handlers_disconnect_by_func (wid, restore, tr);
     panel_icon_grid_set_geometry (PANEL_ICON_GRID (tr->grid), panel_get_orientation (tr->panel),
         panel_get_icon_size (tr->panel), panel_get_icon_size (tr->panel), 3, 0, panel_get_height (tr->panel));
-    return FALSE;
+    // this set_geometry call stalls in some circumstances until another plugin gets a mouseover...
 }
 
 static gboolean redraw (gpointer data)
 {
     TrayPlugin *tr = (TrayPlugin *) data;
-    gtk_container_foreach (GTK_CONTAINER (tr->plugin), hide_item, NULL);
+    g_signal_connect (tr->grid, "size-allocate", G_CALLBACK (restore), tr);
     panel_icon_grid_set_geometry (PANEL_ICON_GRID (tr->grid), panel_get_orientation (tr->panel),
         0, 0, 3, 0, panel_get_height (tr->panel));
-    g_timeout_add (50, restore, tr);
     return FALSE;
 }
 
