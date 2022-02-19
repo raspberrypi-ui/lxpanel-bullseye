@@ -181,7 +181,7 @@ static void client_delete(TrayPlugin * tr, TrayClient * tc, gboolean unlink, gbo
     /* Deallocate the client structure. */
     g_free(tc);
 
-    g_timeout_add (100, redraw, tr);
+    redraw (tr);
 }
 
 /*** Balloon message display ***/
@@ -489,7 +489,7 @@ static void trayclient_request_dock(TrayPlugin * tr, XClientMessageEvent * xeven
         tc_pred->client_flink = tc;
     }
 
-    g_timeout_add (100, redraw, tr);
+    redraw (tr);
 }
 
 /* GDK event filter. */
@@ -677,7 +677,7 @@ static GtkWidget *tray_constructor(LXPanel *panel, config_setting_t *settings)
     gtk_widget_set_name(p, "tray");
     panel_icon_grid_set_aspect_width(PANEL_ICON_GRID(p), TRUE);
 
-    g_timeout_add (1000, redraw, tr);
+    redraw (tr);
 
     return p;
 }
