@@ -190,7 +190,7 @@ static void process_client_msg ( XClientMessageEvent* ev )
                                         if (p->priv->edge != EDGE_BOTTOM)
                                         {
                                             p->priv->edge = EDGE_BOTTOM;
-                                            gtk_widget_queue_resize(GTK_WIDGET(p));
+                                            g_idle_add (gtk_widget_queue_resize, p);
                                         }
                                     }
                                     else
@@ -198,7 +198,7 @@ static void process_client_msg ( XClientMessageEvent* ev )
                                         if (p->priv->edge != EDGE_TOP)
                                         {
                                             p->priv->edge = EDGE_TOP;
-                                            gtk_widget_queue_resize(GTK_WIDGET(p));
+                                            g_idle_add (gtk_widget_queue_resize, p);
                                         }
                                     }
                                 }

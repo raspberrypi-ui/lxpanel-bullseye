@@ -365,7 +365,7 @@ static gboolean space_apply_configuration(gpointer user_data)
     PanelSpace * p = user_data;
 
     /* Apply settings. */
-    gtk_widget_queue_resize(user_data);
+    g_idle_add (gtk_widget_queue_resize, user_data);
     /* Save config values */
     config_group_set_int(p->settings, "Size", p->size);
     return FALSE;
