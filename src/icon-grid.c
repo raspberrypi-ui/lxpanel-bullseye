@@ -391,7 +391,7 @@ static void panel_icon_grid_size_request(GtkWidget *widget,
 
     /* Apply the requisition. */
     if (ig->rows != old_rows || ig->columns != old_columns)
-        gtk_widget_queue_resize(widget);
+        g_idle_add (gtk_widget_queue_resize, widget);
 }
 
 #if GTK_CHECK_VERSION(3, 0, 0)
@@ -457,7 +457,7 @@ void panel_icon_grid_set_constrain_width(PanelIconGrid * ig, gboolean constrain_
         return;
 
     ig->constrain_width = !!constrain_width;
-    gtk_widget_queue_resize(GTK_WIDGET(ig));
+    g_idle_add (gtk_widget_queue_resize, ig);
 }
 
 void panel_icon_grid_set_aspect_width(PanelIconGrid * ig, gboolean aspect_width)
@@ -468,7 +468,7 @@ void panel_icon_grid_set_aspect_width(PanelIconGrid * ig, gboolean aspect_width)
         return;
 
     ig->aspect_width = !!aspect_width;
-    gtk_widget_queue_resize(GTK_WIDGET(ig));
+    g_idle_add (gtk_widget_queue_resize, ig);
 }
 
 /* void panel_icon_grid_set_fill_width(PanelIconGrid * ig, gboolean fill_width)
@@ -503,7 +503,7 @@ static void panel_icon_grid_remove(GtkContainer *container, GtkWidget *widget)
 
             /* Do a relayout if needed. */
             if (was_visible)
-                gtk_widget_queue_resize(GTK_WIDGET(ig));
+                g_idle_add (gtk_widget_queue_resize, ig);
             break;
         }
         children = children->next;
@@ -558,7 +558,7 @@ void panel_icon_grid_reorder_child(PanelIconGrid * ig, GtkWidget * child, gint p
 
     /* Do a relayout. */
     if (gtk_widget_get_visible(child) && gtk_widget_get_visible(GTK_WIDGET(ig)))
-        gtk_widget_queue_resize(child);
+        g_idle_add (gtk_widget_queue_resize, child);
 }
 
 guint panel_icon_grid_get_n_children(PanelIconGrid * ig)
@@ -586,7 +586,7 @@ void panel_icon_grid_set_geometry(PanelIconGrid * ig,
     ig->child_height = child_height;
     ig->spacing = MAX(spacing, 1);
     ig->target_dimension = MAX(target_dimension, 0);
-    gtk_widget_queue_resize(GTK_WIDGET(ig));
+    g_idle_add (gtk_widget_queue_resize, ig);
 }
 
 /* get position for coordinates, return FALSE if it's outside of icon grid */
@@ -829,7 +829,7 @@ static void panel_icon_grid_set_property(GObject *object, guint prop_id,
         if (orientation != ig->orientation)
         {
             ig->orientation = orientation;
-            gtk_widget_queue_resize(GTK_WIDGET(ig));
+            g_idle_add (gtk_widget_queue_resize, ig);
         }
         break;
     case PROP_SPACING:
@@ -838,7 +838,7 @@ static void panel_icon_grid_set_property(GObject *object, guint prop_id,
         {
             ig->spacing = spacing;
             g_object_notify(object, "spacing");
-            gtk_widget_queue_resize(GTK_WIDGET(ig));
+            g_idle_add (gtk_widget_queue_resize, ig);
         }
         break;
     case PROP_CONSTRAIN_WIDTH:

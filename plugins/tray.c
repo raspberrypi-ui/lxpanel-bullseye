@@ -106,7 +106,6 @@ static void restore (GtkWidget *wid, GtkAllocation *alloc, gpointer data)
     g_signal_handlers_disconnect_by_func (wid, restore, tr);
     panel_icon_grid_set_geometry (PANEL_ICON_GRID (tr->grid), panel_get_orientation (tr->panel),
         panel_get_icon_size (tr->panel), panel_get_icon_size (tr->panel), 3, 0, panel_get_height (tr->panel));
-    // this set_geometry call stalls in some circumstances until another plugin gets a mouseover...
 }
 
 static gboolean redraw (gpointer data)

@@ -1071,7 +1071,7 @@ static void _panel_update_background(LXPanel * p, gboolean enforce)
 #if !GTK_CHECK_VERSION(3, 0, 0)
     gdk_window_clear(gtk_widget_get_window(w));
 #endif
-    gtk_widget_queue_draw(w);
+    g_idle_add (gtk_widget_queue_draw, w);
 
     /* Loop over all plugins redrawing each plugin. */
     if (p->priv->box != NULL)
@@ -1200,7 +1200,7 @@ static void ah_state_set(LXPanel *panel, PanelAHState ah_state)
             gtk_window_move(GTK_WINDOW(panel), rect.x, rect.y);
             gtk_widget_show(GTK_WIDGET(panel));
             gtk_widget_show(p->box);
-            gtk_widget_queue_resize(GTK_WIDGET(panel));
+            g_idle_add (gtk_widget_queue_resize, panel);
             gtk_window_stick(GTK_WINDOW(panel));
             break;
         case AH_STATE_WAITING:
@@ -2288,7 +2288,7 @@ static void on_monitors_changed(GdkScreen* screen, gpointer unused)
             /* SF bug #666: after screen resize panel cannot establish
                right size since cannot be moved while is hidden */
             ah_state_set(p, AH_STATE_VISIBLE);
-            gtk_widget_queue_resize(GTK_WIDGET(p));
+            g_idle_add (gtk_widget_queue_resize, p);
         }
     }
 }
