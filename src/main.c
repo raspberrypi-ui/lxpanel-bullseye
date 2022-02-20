@@ -90,6 +90,12 @@ void restart(void)
                                               name,PANEL_CONF_TYPE_INT);\
     if (_s) config_setting_set_int(_s,val); } while(0)
 
+static gboolean queue_resize (gpointer data)
+{
+    gtk_widget_queue_resize (GTK_WIDGET (data));
+    return FALSE;
+}
+
 static void process_client_msg ( XClientMessageEvent* ev )
 {
     int cmd = ev->data.b[0];
@@ -190,7 +196,7 @@ static void process_client_msg ( XClientMessageEvent* ev )
                                         if (p->priv->edge != EDGE_BOTTOM)
                                         {
                                             p->priv->edge = EDGE_BOTTOM;
-                                            g_idle_add (gtk_widget_queue_resize, p);
+                                            g_idle_add (queue_resize, p);
                                         }
                                     }
                                     else
@@ -198,7 +204,7 @@ static void process_client_msg ( XClientMessageEvent* ev )
                                         if (p->priv->edge != EDGE_TOP)
                                         {
                                             p->priv->edge = EDGE_TOP;
-                                            g_idle_add (gtk_widget_queue_resize, p);
+                                            g_idle_add (queue_resize, p);
                                         }
                                     }
                                 }

@@ -212,6 +212,18 @@ void warp_pointer (Panel *p)
 
 G_DEFINE_TYPE(PanelToplevel, lxpanel, GTK_TYPE_WINDOW);
 
+static gboolean queue_resize (gpointer data)
+{
+    gtk_widget_queue_resize (GTK_WIDGET (data));
+    return FALSE;
+}
+
+static gboolean queue_draw (gpointer data)
+{
+    gtk_widget_queue_draw (GTK_WIDGET (data));
+    return FALSE;
+}
+
 static void lxpanel_finalize(GObject *object)
 {
     LXPanel *self = LXPANEL(object);
@@ -1071,7 +1083,7 @@ static void _panel_update_background(LXPanel * p, gboolean enforce)
 #if !GTK_CHECK_VERSION(3, 0, 0)
     gdk_window_clear(gtk_widget_get_window(w));
 #endif
-    g_idle_add (gtk_widget_queue_draw, w);
+    g_idle_add (queue_draw, w);
 
     /* Loop over all plugins redrawing each plugin. */
     if (p->priv->box != NULL)
@@ -1200,7 +1212,7 @@ static void ah_state_set(LXPanel *panel, PanelAHState ah_state)
             gtk_window_move(GTK_WINDOW(panel), rect.x, rect.y);
             gtk_widget_show(GTK_WIDGET(panel));
             gtk_widget_show(p->box);
-            g_idle_add (gtk_widget_queue_resize, panel);
+            g_idle_add (queue_resize, panel);
             gtk_window_stick(GTK_WINDOW(panel));
             break;
         case AH_STATE_WAITING:
@@ -2288,7 +2300,7 @@ static void on_monitors_changed(GdkScreen* screen, gpointer unused)
             /* SF bug #666: after screen resize panel cannot establish
                right size since cannot be moved while is hidden */
             ah_state_set(p, AH_STATE_VISIBLE);
-            g_idle_add (gtk_widget_queue_resize, p);
+            g_idle_add (queue_resize, p);
         }
     }
 }
