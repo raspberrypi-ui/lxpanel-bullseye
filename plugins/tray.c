@@ -110,7 +110,7 @@ static gboolean redraw (gpointer data)
     TrayPlugin *tr = (TrayPlugin *) data;
     g_signal_connect (tr->plugin, "size-allocate", G_CALLBACK (restore), tr);
     panel_icon_grid_set_geometry (PANEL_ICON_GRID (tr->plugin), panel_get_orientation (tr->panel),
-        0, 0, 3, 0, panel_get_height (tr->panel));
+        panel_get_icon_size (tr->panel), 0, 3, 0, 0);
     return FALSE;
 }
 
