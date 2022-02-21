@@ -394,10 +394,6 @@ static void panel_icon_grid_size_request(GtkWidget *widget,
     gint old_columns = ig->columns;
 
     panel_icon_grid_calculate_size(ig, requisition);
-
-    /* Apply the requisition. */
-    if (ig->rows != old_rows || ig->columns != old_columns)
-        g_idle_add (queue_resize, widget);
 }
 
 #if GTK_CHECK_VERSION(3, 0, 0)
