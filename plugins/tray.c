@@ -675,7 +675,7 @@ static GtkWidget *tray_constructor(LXPanel *panel, config_setting_t *settings)
     gtk_widget_show_all (tr->plugin);
     lxpanel_plugin_set_data(p, tr, tray_destructor);
     gtk_widget_set_name(p, "tray");
-    panel_icon_grid_set_aspect_width(PANEL_ICON_GRID(p), TRUE);
+    panel_icon_grid_set_aspect_width(PANEL_ICON_GRID(tr->grid), TRUE);
 
     redraw (tr);
 
