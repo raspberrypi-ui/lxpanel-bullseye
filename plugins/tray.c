@@ -162,7 +162,7 @@ static void client_delete(TrayPlugin * tr, TrayClient * tc, gboolean unlink, gbo
     g_free(tc);
 
 #if GTK_CHECK_VERSION(3, 0, 0)
-    panel_icon_grid_force_redraw (tr->plugin);
+    panel_icon_grid_force_redraw (PANEL_ICON_GRID (tr->plugin));
 #endif
 }
 
@@ -472,7 +472,7 @@ static void trayclient_request_dock(TrayPlugin * tr, XClientMessageEvent * xeven
     }
 
 #if GTK_CHECK_VERSION(3, 0, 0)
-    panel_icon_grid_force_redraw (tr->plugin);
+    panel_icon_grid_force_redraw (PANEL_ICON_GRID (tr->plugin));
 #endif
 }
 
@@ -658,7 +658,7 @@ static GtkWidget *tray_constructor(LXPanel *panel, config_setting_t *settings)
     panel_icon_grid_set_aspect_width(PANEL_ICON_GRID(p), TRUE);
 
 #if GTK_CHECK_VERSION(3, 0, 0)
-    panel_icon_grid_force_redraw (tr->plugin);
+    panel_icon_grid_force_redraw (PANEL_ICON_GRID (tr->plugin));
 #endif
 
     return p;
