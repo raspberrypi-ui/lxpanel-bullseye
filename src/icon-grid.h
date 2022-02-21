@@ -143,6 +143,10 @@ extern void panel_icon_grid_set_drag_dest(PanelIconGrid * ig, GtkWidget * child,
  */
 extern PanelIconGridDropPosition panel_icon_grid_get_drag_dest(PanelIconGrid * ig, GtkWidget ** child);
 
+/* function required under GTK+3 to force the system tray to redraw properly */
+
+extern void panel_icon_grid_force_redraw (PanelIconGrid *ig);
+
 G_END_DECLS
 
 #endif

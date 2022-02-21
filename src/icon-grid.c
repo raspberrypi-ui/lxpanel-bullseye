@@ -61,6 +61,7 @@ struct _PanelIconGrid
     GdkWindow *event_window;			/* Event window if NO_WINDOW is set */
     GtkWidget *dest_item;			/* Drag destination to draw focus */
     PanelIconGridDropPosition dest_pos;		/* Position to draw focus */
+    gboolean hide_children;         /* Flag to force a full redraw of all children while keeping overall allocation the same */
 };
 
 struct _PanelIconGridClass
@@ -221,6 +222,11 @@ static void panel_icon_grid_size_allocate(GtkWidget *widget,
             icon_grid_element_check_requisition(ig, &req);
             child_allocation.width = MIN(req.width, child_width);
             child_allocation.height = MIN(req.height, child_height);
+            if (ig->hide_children)
+            {
+                child_allocation.width = 0;
+                child_allocation.height = 0;
+            }
 
             /* Check this grid position */
             if (ig->orientation == GTK_ORIENTATION_HORIZONTAL)
@@ -583,11 +589,27 @@ void panel_icon_grid_set_geometry(PanelIconGrid * ig,
             ig->target_dimension == target_dimension)
         return;
 
+    ig->hide_children = FALSE;
     ig->orientation = orientation;
     ig->child_width = child_width;
     ig->child_height = child_height;
     ig->spacing = MAX(spacing, 1);
     ig->target_dimension = MAX(target_dimension, 0);
+    g_idle_add (queue_resize, ig);
+}
+
+static void restore_children (GtkWidget *wid, GtkAllocation *alloc, gpointer data)
+{
+    PanelIconGrid *ig = (PanelIconGrid *) data;
+    g_signal_handlers_disconnect_by_func (wid, restore_children, ig);
+    ig->hide_children = FALSE;
+    g_idle_add (queue_resize, ig);
+}
+
+void panel_icon_grid_force_redraw (PanelIconGrid * ig)
+{
+    g_signal_connect (ig, "size-allocate", G_CALLBACK (restore_children), ig);
+    ig->hide_children = TRUE;
     g_idle_add (queue_resize, ig);
 }
 
@@ -1241,6 +1263,7 @@ GtkWidget * panel_icon_grid_new(
     ig->child_width = child_width;
     ig->child_height = child_height;
     ig->target_dimension = MAX(target_dimension, 0);
+    ig->hide_children = FALSE;
 
     return (GtkWidget *)ig;
 }
