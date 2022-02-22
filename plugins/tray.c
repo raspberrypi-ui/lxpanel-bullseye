@@ -101,9 +101,18 @@ static void tray_destructor(gpointer user_data);
 void force_redraw (TrayPlugin *tr)
 {
 #if GTK_CHECK_VERSION(3, 0, 0)
+	if (tr->redraw_called != 0) return;
 	tr->redraw_called = 3;
 	panel_icon_grid_force_redraw (PANEL_ICON_GRID (tr->plugin));
 #endif
+}
+
+static gboolean init_redraw (gpointer data)
+{
+	TrayPlugin *tr = (TrayPlugin *) data;
+	tr->redraw_called = 0;
+	force_redraw (tr);
+	return FALSE;
 }
 
 /* Look up a client in the client list. */
@@ -670,10 +679,12 @@ static GtkWidget *tray_constructor(LXPanel *panel, config_setting_t *settings)
     lxpanel_plugin_set_data(p, tr, tray_destructor);
     gtk_widget_set_name(p, "tray");
     panel_icon_grid_set_aspect_width(PANEL_ICON_GRID(p), TRUE);
-    tr->redraw_called = 0;
-    g_signal_connect (p, "size-allocate", G_CALLBACK (resized), tr);
 
-    force_redraw (tr);
+#if GTK_CHECK_VERSION(3, 0, 0)
+    tr->redraw_called = -1;
+    g_signal_connect (p, "size-allocate", G_CALLBACK (resized), tr);
+	g_idle_add (init_redraw, tr);
+#endif
 
     return p;
 }
