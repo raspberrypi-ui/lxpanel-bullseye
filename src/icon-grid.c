@@ -598,14 +598,20 @@ static void restore_children (GtkWidget *wid, GtkAllocation *alloc, gpointer dat
     PanelIconGrid *ig = (PanelIconGrid *) data;
     g_signal_handlers_disconnect_by_func (wid, restore_children, ig);
     ig->hide_children = FALSE;
-    gtk_widget_queue_resize (GTK_WIDGET (ig));
+    gtk_widget_queue_resize (GTK_WIDGET (data));
+}
+
+static gboolean queue_resize (gpointer data)
+{
+	gtk_widget_queue_resize (GTK_WIDGET (data));
+	return FALSE;
 }
 
 void panel_icon_grid_force_redraw (PanelIconGrid * ig)
 {
     g_signal_connect (ig, "size-allocate", G_CALLBACK (restore_children), ig);
     ig->hide_children = TRUE;
-    gtk_widget_queue_resize (GTK_WIDGET (ig));
+    g_idle_add (queue_resize, ig);
 }
 
 /* get position for coordinates, return FALSE if it's outside of icon grid */
