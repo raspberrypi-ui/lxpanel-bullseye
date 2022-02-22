@@ -56,12 +56,6 @@ static const GtkTargetEntry dnd_targets[] = {
 
 static GdkAtom launcher_dnd_atom;
 
-static gboolean queue_resize (gpointer data)
-{
-    gtk_widget_queue_resize (GTK_WIDGET (data));
-    return FALSE;
-}
-
 static gboolean panel_space_drag_drop(GtkWidget *widget, GdkDragContext *context,
                                       gint x, gint y, guint time)
 {
@@ -371,7 +365,7 @@ static gboolean space_apply_configuration(gpointer user_data)
     PanelSpace * p = user_data;
 
     /* Apply settings. */
-    g_idle_add (queue_resize, user_data);
+    gtk_widget_queue_resize(user_data);
     /* Save config values */
     config_group_set_int(p->settings, "Size", p->size);
     return FALSE;

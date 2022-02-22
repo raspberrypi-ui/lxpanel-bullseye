@@ -69,12 +69,6 @@ struct _PanelIconGridClass
     GtkContainerClass parent_class;
 };
 
-static gboolean queue_resize (gpointer data)
-{
-    gtk_widget_queue_resize (GTK_WIDGET (data));
-    return FALSE;
-}
-
 static void icon_grid_element_check_requisition(PanelIconGrid *ig,
                                                 GtkRequisition *requisition)
 {
@@ -465,7 +459,7 @@ void panel_icon_grid_set_constrain_width(PanelIconGrid * ig, gboolean constrain_
         return;
 
     ig->constrain_width = !!constrain_width;
-    g_idle_add (queue_resize, ig);
+    gtk_widget_queue_resize(GTK_WIDGET(ig));
 }
 
 void panel_icon_grid_set_aspect_width(PanelIconGrid * ig, gboolean aspect_width)
@@ -476,7 +470,7 @@ void panel_icon_grid_set_aspect_width(PanelIconGrid * ig, gboolean aspect_width)
         return;
 
     ig->aspect_width = !!aspect_width;
-    g_idle_add (queue_resize, ig);
+    gtk_widget_queue_resize(GTK_WIDGET(ig));
 }
 
 /* void panel_icon_grid_set_fill_width(PanelIconGrid * ig, gboolean fill_width)
@@ -511,7 +505,7 @@ static void panel_icon_grid_remove(GtkContainer *container, GtkWidget *widget)
 
             /* Do a relayout if needed. */
             if (was_visible)
-                g_idle_add (queue_resize, ig);
+                gtk_widget_queue_resize(GTK_WIDGET(ig));
             break;
         }
         children = children->next;
@@ -566,7 +560,7 @@ void panel_icon_grid_reorder_child(PanelIconGrid * ig, GtkWidget * child, gint p
 
     /* Do a relayout. */
     if (gtk_widget_get_visible(child) && gtk_widget_get_visible(GTK_WIDGET(ig)))
-        g_idle_add (queue_resize, child);
+        gtk_widget_queue_resize(child);
 }
 
 guint panel_icon_grid_get_n_children(PanelIconGrid * ig)
@@ -595,7 +589,8 @@ void panel_icon_grid_set_geometry(PanelIconGrid * ig,
     ig->child_height = child_height;
     ig->spacing = MAX(spacing, 1);
     ig->target_dimension = MAX(target_dimension, 0);
-    g_idle_add (queue_resize, ig);
+    gtk_widget_queue_resize(GTK_WIDGET(ig));
+
 }
 
 static void restore_children (GtkWidget *wid, GtkAllocation *alloc, gpointer data)
@@ -603,14 +598,14 @@ static void restore_children (GtkWidget *wid, GtkAllocation *alloc, gpointer dat
     PanelIconGrid *ig = (PanelIconGrid *) data;
     g_signal_handlers_disconnect_by_func (wid, restore_children, ig);
     ig->hide_children = FALSE;
-    g_idle_add (queue_resize, ig);
+    gtk_widget_queue_resize (GTK_WIDGET (ig));
 }
 
 void panel_icon_grid_force_redraw (PanelIconGrid * ig)
 {
     g_signal_connect (ig, "size-allocate", G_CALLBACK (restore_children), ig);
     ig->hide_children = TRUE;
-    g_idle_add (queue_resize, ig);
+    gtk_widget_queue_resize (GTK_WIDGET (ig));
 }
 
 /* get position for coordinates, return FALSE if it's outside of icon grid */
@@ -853,7 +848,7 @@ static void panel_icon_grid_set_property(GObject *object, guint prop_id,
         if (orientation != ig->orientation)
         {
             ig->orientation = orientation;
-            g_idle_add (queue_resize, ig);
+            gtk_widget_queue_resize(GTK_WIDGET(ig));
         }
         break;
     case PROP_SPACING:
@@ -862,7 +857,7 @@ static void panel_icon_grid_set_property(GObject *object, guint prop_id,
         {
             ig->spacing = spacing;
             g_object_notify(object, "spacing");
-            g_idle_add (queue_resize, ig);
+            gtk_widget_queue_resize(GTK_WIDGET(ig));
         }
         break;
     case PROP_CONSTRAIN_WIDTH:
