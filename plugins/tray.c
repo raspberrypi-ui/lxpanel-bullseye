@@ -683,7 +683,7 @@ static GtkWidget *tray_constructor(LXPanel *panel, config_setting_t *settings)
 #if GTK_CHECK_VERSION(3, 0, 0)
     tr->redraw_called = -1;
     g_signal_connect (p, "size-allocate", G_CALLBACK (resized), tr);
-	g_idle_add (init_redraw, tr);
+    g_idle_add (init_redraw, tr);
 #endif
 
     return p;
