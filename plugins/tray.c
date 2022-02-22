@@ -101,18 +101,18 @@ static void tray_destructor(gpointer user_data);
 void force_redraw (TrayPlugin *tr)
 {
 #if GTK_CHECK_VERSION(3, 0, 0)
-	if (tr->redraw_called != 0) return;
-	tr->redraw_called = 3;
-	panel_icon_grid_force_redraw (PANEL_ICON_GRID (tr->plugin));
+    if (tr->redraw_called != 0) return;
+    tr->redraw_called = 3;		/* each force_redraw causes 3 size-allocate events */
+    panel_icon_grid_force_redraw (PANEL_ICON_GRID (tr->plugin));
 #endif
 }
 
 static gboolean init_redraw (gpointer data)
 {
-	TrayPlugin *tr = (TrayPlugin *) data;
-	tr->redraw_called = 0;
-	force_redraw (tr);
-	return FALSE;
+    TrayPlugin *tr = (TrayPlugin *) data;
+    tr->redraw_called = 0;
+    force_redraw (tr);
+    return FALSE;
 }
 
 /* Look up a client in the client list. */
@@ -583,10 +583,10 @@ static void tray_unmanage_selection(TrayPlugin * tr)
 static void resized (GtkWidget *wid, GtkAllocation *alloc, gpointer data)
 {
     TrayPlugin *tr = (TrayPlugin *) data;
-	if (tr->redraw_called == 0)
-		force_redraw (tr);
-	else if (tr->redraw_called > 0)
-		tr->redraw_called--;
+    if (tr->redraw_called == 0)
+        force_redraw (tr);
+    else if (tr->redraw_called > 0)
+        tr->redraw_called--;
 }
 
 /* Plugin constructor. */

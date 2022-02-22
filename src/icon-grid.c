@@ -603,8 +603,8 @@ static void restore_children (GtkWidget *wid, GtkAllocation *alloc, gpointer dat
 
 static gboolean queue_resize (gpointer data)
 {
-	gtk_widget_queue_resize (GTK_WIDGET (data));
-	return FALSE;
+    gtk_widget_queue_resize (GTK_WIDGET (data));
+    return FALSE;
 }
 
 void panel_icon_grid_force_redraw (PanelIconGrid * ig)
