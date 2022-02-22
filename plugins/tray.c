@@ -101,7 +101,7 @@ static void tray_destructor(gpointer user_data);
 void force_redraw (TrayPlugin *tr)
 {
 #if GTK_CHECK_VERSION(3, 0, 0)
-	tr->redraw_called = 2;
+	tr->redraw_called = 3;
 	panel_icon_grid_force_redraw (PANEL_ICON_GRID (tr->plugin));
 #endif
 }
