@@ -89,6 +89,7 @@ typedef struct _tray_plugin {
     GtkWidget * invisible;			/* Invisible window that holds manager selection */
     Window invisible_window;			/* X window ID of invisible window */
     GdkAtom selection_atom;			/* Atom for _NET_SYSTEM_TRAY_S%d */
+    int redraw_called;				/* Counter for size-allocate events to distinguish between deliberate redraws and events from panel */
 } TrayPlugin;
 
 static void balloon_message_display(TrayPlugin * tr, BalloonMessage * msg);
@@ -96,6 +97,14 @@ static void balloon_incomplete_message_remove(TrayPlugin * tr, Window window, gb
 static void balloon_message_remove(TrayPlugin * tr, Window window, gboolean all_ids, long id);
 static void tray_unmanage_selection(TrayPlugin * tr);
 static void tray_destructor(gpointer user_data);
+
+void force_redraw (TrayPlugin *tr)
+{
+#if GTK_CHECK_VERSION(3, 0, 0)
+	tr->redraw_called = 2;
+	panel_icon_grid_force_redraw (PANEL_ICON_GRID (tr->plugin));
+#endif
+}
 
 /* Look up a client in the client list. */
 static TrayClient * client_lookup(TrayPlugin * tr, Window window)
@@ -161,9 +170,7 @@ static void client_delete(TrayPlugin * tr, TrayClient * tc, gboolean unlink, gbo
     /* Deallocate the client structure. */
     g_free(tc);
 
-#if GTK_CHECK_VERSION(3, 0, 0)
-    panel_icon_grid_force_redraw (PANEL_ICON_GRID (tr->plugin));
-#endif
+    force_redraw (tr);
 }
 
 /*** Balloon message display ***/
@@ -471,9 +478,7 @@ static void trayclient_request_dock(TrayPlugin * tr, XClientMessageEvent * xeven
         tc_pred->client_flink = tc;
     }
 
-#if GTK_CHECK_VERSION(3, 0, 0)
-    panel_icon_grid_force_redraw (PANEL_ICON_GRID (tr->plugin));
-#endif
+    force_redraw (tr);
 }
 
 /* GDK event filter. */
@@ -566,6 +571,15 @@ static void tray_unmanage_selection(TrayPlugin * tr)
     }
 }
 
+static void resized (GtkWidget *wid, GtkAllocation *alloc, gpointer data)
+{
+    TrayPlugin *tr = (TrayPlugin *) data;
+	if (tr->redraw_called == 0)
+		force_redraw (tr);
+	else if (tr->redraw_called > 0)
+		tr->redraw_called--;
+}
+
 /* Plugin constructor. */
 static GtkWidget *tray_constructor(LXPanel *panel, config_setting_t *settings)
 {
@@ -656,10 +670,10 @@ static GtkWidget *tray_constructor(LXPanel *panel, config_setting_t *settings)
     lxpanel_plugin_set_data(p, tr, tray_destructor);
     gtk_widget_set_name(p, "tray");
     panel_icon_grid_set_aspect_width(PANEL_ICON_GRID(p), TRUE);
+    tr->redraw_called = 0;
+    g_signal_connect (p, "size-allocate", G_CALLBACK (resized), tr);
 
-#if GTK_CHECK_VERSION(3, 0, 0)
-    panel_icon_grid_force_redraw (PANEL_ICON_GRID (tr->plugin));
-#endif
+    force_redraw (tr);
 
     return p;
 }
@@ -697,15 +711,14 @@ static void tray_destructor(gpointer user_data)
 /* Callback when panel configuration changes. */
 static void tray_panel_configuration_changed(LXPanel *panel, GtkWidget *p)
 {
+    TrayPlugin *tr = lxpanel_plugin_get_data(p);
     /* Set orientation into the icon grid. */
     panel_icon_grid_set_geometry(PANEL_ICON_GRID(p), panel_get_orientation(panel),
                                  panel_get_icon_size(panel),
                                  panel_get_icon_size(panel),
                                  3, 0, panel_get_height(panel));
 
-#if GTK_CHECK_VERSION(3, 0, 0)
-    panel_icon_grid_force_redraw (PANEL_ICON_GRID(p));
-#endif
+    force_redraw (tr);
 }
 
 /* Plugin descriptor. */
