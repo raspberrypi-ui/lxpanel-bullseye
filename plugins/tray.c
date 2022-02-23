@@ -98,21 +98,39 @@ static void balloon_message_remove(TrayPlugin * tr, Window window, gboolean all_
 static void tray_unmanage_selection(TrayPlugin * tr);
 static void tray_destructor(gpointer user_data);
 
-void force_redraw (TrayPlugin *tr)
-{
-#if GTK_CHECK_VERSION(3, 0, 0)
-    if (tr->redraw_called != 0) return;
-    tr->redraw_called = 3;		/* each force_redraw causes 3 size-allocate events */
-    panel_icon_grid_force_redraw (PANEL_ICON_GRID (tr->plugin));
-#endif
-}
-
 static gboolean init_redraw (gpointer data)
 {
     TrayPlugin *tr = (TrayPlugin *) data;
-    tr->redraw_called = 0;
-    force_redraw (tr);
+    tr->redraw_called = 3;		/* each force_redraw causes 3 size-allocate events */
+    panel_icon_grid_force_redraw (PANEL_ICON_GRID (tr->plugin));
     return FALSE;
+}
+
+static gboolean do_redraw (gpointer data)
+{
+    TrayPlugin *tr = (TrayPlugin *) data;
+    if (tr->redraw_called == 0)
+    {
+        tr->redraw_called = 3;		/* each force_redraw causes 3 size-allocate events */
+        panel_icon_grid_force_redraw (PANEL_ICON_GRID (tr->plugin));
+    }
+    return FALSE;
+}
+
+static void redraw (TrayPlugin *tr)
+{
+#if GTK_CHECK_VERSION (3, 0, 0)
+    g_idle_add (do_redraw, tr);
+#endif
+}
+
+static void on_size_alloc (GtkWidget *wid, GtkAllocation *alloc, gpointer data)
+{
+    TrayPlugin *tr = (TrayPlugin *) data;
+    if (tr->redraw_called == 0)
+        redraw (tr);
+    else if (tr->redraw_called > 0)
+        tr->redraw_called--;
 }
 
 /* Look up a client in the client list. */
@@ -179,7 +197,7 @@ static void client_delete(TrayPlugin * tr, TrayClient * tc, gboolean unlink, gbo
     /* Deallocate the client structure. */
     g_free(tc);
 
-    force_redraw (tr);
+    redraw (tr);
 }
 
 /*** Balloon message display ***/
@@ -487,7 +505,7 @@ static void trayclient_request_dock(TrayPlugin * tr, XClientMessageEvent * xeven
         tc_pred->client_flink = tc;
     }
 
-    force_redraw (tr);
+    redraw (tr);
 }
 
 /* GDK event filter. */
@@ -578,15 +596,6 @@ static void tray_unmanage_selection(TrayPlugin * tr)
         gtk_widget_destroy(invisible);
         g_object_unref(G_OBJECT(invisible));
     }
-}
-
-static void resized (GtkWidget *wid, GtkAllocation *alloc, gpointer data)
-{
-    TrayPlugin *tr = (TrayPlugin *) data;
-    if (tr->redraw_called == 0)
-        force_redraw (tr);
-    else if (tr->redraw_called > 0)
-        tr->redraw_called--;
 }
 
 /* Plugin constructor. */
@@ -682,7 +691,7 @@ static GtkWidget *tray_constructor(LXPanel *panel, config_setting_t *settings)
 
 #if GTK_CHECK_VERSION(3, 0, 0)
     tr->redraw_called = -1;
-    g_signal_connect (p, "size-allocate", G_CALLBACK (resized), tr);
+    g_signal_connect (p, "size-allocate", G_CALLBACK (on_size_alloc), tr);
     g_idle_add (init_redraw, tr);
 #endif
 
@@ -729,7 +738,7 @@ static void tray_panel_configuration_changed(LXPanel *panel, GtkWidget *p)
                                  panel_get_icon_size(panel),
                                  3, 0, panel_get_height(panel));
 
-    force_redraw (tr);
+    redraw (tr);
 }
 
 /* Plugin descriptor. */

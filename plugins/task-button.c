@@ -1149,10 +1149,9 @@ static void task_update_icon(TaskButton *task, TaskDetails *details, Atom source
     if (source != None || (details && details->icon))
         _task_update_icon(task, details, source);
     else if (task->idle_loader == 0)
-    {
-        task->idle_loader = 1;
-        g_idle_add (task_update_icon_idle, task);
-    }
+        task->idle_loader = gdk_threads_add_timeout_full(G_PRIORITY_LOW, 20,
+                                                         task_update_icon_idle,
+                                                         task, NULL);
 }
 
 /* Draw the label and tooltip on a taskbar button. */
@@ -1257,6 +1256,8 @@ static void task_button_finalize(GObject *object)
     if (self->menu_list)
         g_object_remove_weak_pointer(G_OBJECT(self->menu_list),
                                      (void **)&self->menu_list);
+    if (self->idle_loader)
+        g_source_remove(self->idle_loader);
     g_list_free_full(self->details, (GDestroyNotify)free_task_details);
 
     G_OBJECT_CLASS(task_button_parent_class)->finalize(object);
@@ -1540,7 +1541,6 @@ TaskButton *task_button_new(Window win, gint desk, gint desks, LXPanel *panel,
         self->icon_size -= 4;
     self->res_class = g_strdup(res_class);
     self->flags = flags;
-    self->idle_loader = 0;
     /* create empty image and label */
     self->image = gtk_image_new();
     self->label = gtk_label_new(NULL);
