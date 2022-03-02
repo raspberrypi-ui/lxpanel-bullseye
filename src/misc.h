@@ -289,6 +289,8 @@ extern int screen_width (GdkScreen *scr);
 extern int screen_height (GdkScreen *scr);
 #endif
 
+extern gboolean is_wizard (void);
+
 G_END_DECLS
 
 #endif

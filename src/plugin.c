@@ -237,6 +237,7 @@ static gboolean lxpanel_plugin_button_press_event(GtkWidget *plugin, GdkEventBut
     if (event->button == 3 && /* right button */
         (event->state & gtk_accelerator_get_default_mod_mask()) == 0) /* no key */
     {
+        if (is_wizard ()) return TRUE;
 #ifdef ENABLE_NLS
 		// this message comes via the plugin, which will have switched to its own text domain, so 
 		// we need to switch back here...

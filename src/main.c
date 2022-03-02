@@ -83,6 +83,12 @@ void restart(void)
     RET();
 }
 
+gboolean is_wizard (void)
+{
+    if (!g_strcmp0 (getenv ("USER"), "wiz")) return TRUE;
+    return FALSE;
+}
+
 /* copied from configurator.c */
 #define UPDATE_GLOBAL_INT(panel,name,val) do { \
     config_setting_t *_s = config_setting_add(config_setting_get_elem(config_setting_get_member(config_root_setting(panel->config),""),\
@@ -658,7 +664,7 @@ static gboolean start_all_panels( )
     const gchar * const * dir;
 
     /* try user panels */
-    panel_dir = _user_config_file_name("panels", NULL);
+    panel_dir = _user_config_file_name(is_wizard () ? "wizard" : "panels", NULL);
 
     /* check to see if there are any panels which will display on monitor 0 */
     char *cmd = g_strdup_printf ("grep -l Global $(grep -L monitor=[1-9] %s/*) /dev/null | grep -c . | grep -q 0", panel_dir);
@@ -675,7 +681,7 @@ static gboolean start_all_panels( )
     dir = g_get_system_config_dirs();
     if (dir) while (dir[0])
     {
-        panel_dir = _system_config_file_name(dir[0], "panels");
+        panel_dir = _system_config_file_name(dir[0], is_wizard () ? "wizard" : "panels");
         _start_panels_from_dir(panel_dir, 0);
         g_free(panel_dir);
         if (all_panels != NULL)
