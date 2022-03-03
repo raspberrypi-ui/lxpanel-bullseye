@@ -504,7 +504,7 @@ static gboolean lxpanel_button_press(GtkWidget *widget, GdkEventButton *event)
         /* ignore clicks with modifiers */
         return FALSE;
 
-    if (is_wizard ()) return FALSE;
+    if (is_wizard ()) return TRUE;
 
     if (event->button == 3) /* right button */
     {
