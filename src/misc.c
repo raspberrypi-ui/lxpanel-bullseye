@@ -1780,4 +1780,10 @@ int screen_height (GdkScreen *scr)
 }
 #endif
 
+gboolean is_wizard (void)
+{
+    if (!g_strcmp0 (getenv ("USER"), "rpi-first-boot-wizard")) return TRUE;
+    return FALSE;
+}
+
 /* vim: set sw=4 et sts=4 : */

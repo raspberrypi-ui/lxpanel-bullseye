@@ -83,12 +83,6 @@ void restart(void)
     RET();
 }
 
-gboolean is_wizard (void)
-{
-    if (!g_strcmp0 (getenv ("USER"), "wiz")) return TRUE;
-    return FALSE;
-}
-
 /* copied from configurator.c */
 #define UPDATE_GLOBAL_INT(panel,name,val) do { \
     config_setting_t *_s = config_setting_add(config_setting_get_elem(config_setting_get_member(config_root_setting(panel->config),""),\
