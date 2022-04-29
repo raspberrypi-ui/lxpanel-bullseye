@@ -711,10 +711,10 @@ static gboolean  change_opt_tree_model_foreach(GtkTreeModel *p_model,
         if(strlen(p_xkb->p_gstring_change_opt_partial->str))
         {
             g_string_append_c(p_xkb->p_gstring_change_opt_partial, ',');
-            g_string_append_c(p_xkb->p_gset_opts, ',');
+            g_string_append_c (p_xkb->p_gset_opts, ',');
         }
         g_string_append(p_xkb->p_gstring_change_opt_partial, change_opt_id);
-        g_string_append_printf(p_xkb->p_gset_opts, "'%s'", change_opt_id);
+        g_string_append_printf (p_xkb->p_gset_opts, "'%s'", change_opt_id);
 
         //g_printf("\npartial change opt = '%s'\n", p_xkb->p_gstring_change_opt_partial->str);
 
@@ -828,7 +828,7 @@ static void on_button_kbd_change_layout_clicked(GtkButton *p_button, gpointer *p
     if(response == GTK_RESPONSE_OK)
     {
         p_xkb->p_gstring_change_opt_partial = g_string_new("");
-        p_xkb->p_gset_opts = g_string_new("");
+        p_xkb->p_gset_opts = g_string_new ("");
         gtk_tree_model_foreach(GTK_TREE_MODEL(p_liststore_kbd_change),
                                change_opt_tree_model_foreach,
                                p_xkb);
