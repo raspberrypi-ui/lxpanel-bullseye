@@ -848,6 +848,10 @@ static void on_button_kbd_change_layout_clicked(GtkButton *p_button, gpointer *p
         g_string_free(p_xkb->p_gset_opts, TRUE);
 
         gtk_button_set_label(GTK_BUTTON(p_xkb->p_button_change_layout), p_xkb->kbd_change_option);
+#if GTK_CHECK_VERSION(3, 0, 0)
+        gtk_label_set_max_width_chars (GTK_LABEL (gtk_bin_get_child (p_xkb->p_button_change_layout)), 25);
+        gtk_label_set_ellipsize (GTK_LABEL (gtk_bin_get_child (p_xkb->p_button_change_layout)), PANGO_ELLIPSIZE_END);
+#endif
         xkb_setxkbmap(p_xkb);
         xkb_redraw(p_xkb);
     }
@@ -1422,6 +1426,8 @@ static GtkWidget *xkb_configure(LXPanel *panel, GtkWidget *p)
     p_xkb->p_button_change_layout = gtk_button_new_with_label(p_xkb->kbd_change_option);
     g_signal_connect(p_xkb->p_button_change_layout, "clicked", G_CALLBACK(on_button_kbd_change_layout_clicked), p_xkb);
 #if GTK_CHECK_VERSION(3, 0, 0)
+    gtk_label_set_max_width_chars (GTK_LABEL (gtk_bin_get_child (p_xkb->p_button_change_layout)), 25);
+    gtk_label_set_ellipsize (GTK_LABEL (gtk_bin_get_child (p_xkb->p_button_change_layout)), PANGO_ELLIPSIZE_END);
     gtk_container_add(GTK_CONTAINER(p_xkb->p_frame_change_layout), p_xkb->p_button_change_layout);
 #else
     gtk_container_add(GTK_CONTAINER(p_alignment_change_layout), p_xkb->p_button_change_layout);
