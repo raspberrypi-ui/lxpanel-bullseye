@@ -845,7 +845,7 @@ static void on_button_kbd_change_layout_clicked(GtkButton *p_button, gpointer *p
         char *set = g_strdup_printf ("gsettings set org.gnome.desktop.input-sources xkb-options \"[%s]\"", p_xkb->p_gset_opts->str);
         system (set);
         g_free (set);
-        g_string_free(p_xkb->p_gset_opts, TRUE);
+        g_string_free (p_xkb->p_gset_opts, TRUE);
 
         gtk_button_set_label(GTK_BUTTON(p_xkb->p_button_change_layout), p_xkb->kbd_change_option);
 #if GTK_CHECK_VERSION(3, 0, 0)
