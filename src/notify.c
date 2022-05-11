@@ -64,7 +64,7 @@ static gboolean window_click (GtkWidget *widget, GdkEventButton *event, NotifyWi
 /* Private functions */
 /*----------------------------------------------------------------------------*/
 
-/* Calculate position; based on xpanel_plugin_popup_set_position_helper */
+/* Calculate position; based on lxpanel_plugin_popup_set_position_helper */
 
 static void notify_position_helper (LXPanel *p, GtkWidget *popup, gint *px, gint *py)
 {

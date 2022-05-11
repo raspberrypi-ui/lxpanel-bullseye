@@ -66,6 +66,8 @@ static int config = 0;
 static gboolean mon_override = FALSE;
 static gboolean is_restarting = FALSE;
 
+static LXPanel *first_panel = NULL;
+
 Command commands[] = {
     //{ "configure", N_("Preferences"), configure },
     { "run", N_("Run"), gtk_run },
@@ -628,6 +630,32 @@ out:
 }
 #undef CLIPBOARD_NAME
 
+#define WARN_FILE "/proc/device-tree/chosen/user-warnings"
+
+static gboolean check_user_warnings (gpointer data)
+{
+    if (!access (WARN_FILE, F_OK))
+    {
+        FILE *fp = fopen (WARN_FILE, "rb");
+        if (fp)
+        {
+            char *buf = NULL;
+            size_t siz = 0;
+            while (getline (&buf, &siz, fp) != -1)
+                lxpanel_notify ((LXPanel *) data, g_strstrip (buf));
+            free (buf);
+            fclose (fp);
+        }
+    }
+    return FALSE;
+}
+
+static gboolean delay_check (gpointer data)
+{
+    g_timeout_add (2000, check_user_warnings, data);
+    return FALSE;
+}
+
 static void _start_panels_from_dir(const char *panel_dir, int fallback)
 {
     GDir* dir = g_dir_open( panel_dir, 0, NULL );
@@ -645,7 +673,10 @@ static void _start_panels_from_dir(const char *panel_dir, int fallback)
         {
             LXPanel* panel = fallback ? panel_new_mon_fb (panel_config, name) : panel_new (panel_config, name);
             if( panel )
+            {
                 all_panels = g_slist_prepend( all_panels, panel );
+                if (!first_panel) first_panel = panel;
+            }
         }
         g_free( panel_config );
     }
@@ -805,6 +836,8 @@ int main(int argc, char *argv[], char *env[])
 
     if( G_UNLIKELY( ! start_all_panels() ) )
         g_warning( "Config files are not found.\n" );
+
+    g_idle_add (delay_check, first_panel);
 /*
  * FIXME: configure??
     if (config)

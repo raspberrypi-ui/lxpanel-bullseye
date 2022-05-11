@@ -2291,26 +2291,6 @@ static void on_monitors_changed(GdkScreen* screen, gpointer unused)
     }
 }
 
-#define WARN_FILE "/proc/device-tree/chosen/user-warnings"
-
-static gboolean check_user_warnings (gpointer data)
-{
-    if (!access (WARN_FILE, F_OK))
-    {
-        FILE *fp = fopen (WARN_FILE, "rb");
-        if (fp)
-        {
-            char *buf = NULL;
-            size_t siz = 0;
-            while (getline (&buf, &siz, fp) != -1)
-                lxpanel_notify ((LXPanel *) data, g_strstrip (buf));
-            free (buf);
-            fclose (fp);
-        }
-    }
-    return FALSE;
-}
-
 static int panel_start(LXPanel *p)
 {
     config_setting_t *list;
@@ -2332,7 +2312,6 @@ static int panel_start(LXPanel *p)
     if (monitors_handler == 0)
         monitors_handler = g_signal_connect(screen, "monitors-changed",
                                             G_CALLBACK(on_monitors_changed), NULL);
-    g_idle_add (check_user_warnings, p);
     return 1;
 }
 
