@@ -592,13 +592,19 @@ void panel_icon_grid_set_geometry(PanelIconGrid * ig,
     gtk_widget_queue_resize(GTK_WIDGET(ig));
 
 }
+static gboolean idle_restore (gpointer data)
+{
+    PanelIconGrid *ig = (PanelIconGrid *) data;
+    ig->hide_children = FALSE;
+    gtk_widget_queue_resize (GTK_WIDGET (data));
+    return FALSE;
+}
 
 static void restore_children (GtkWidget *wid, GtkAllocation *alloc, gpointer data)
 {
     PanelIconGrid *ig = (PanelIconGrid *) data;
     g_signal_handlers_disconnect_by_func (wid, restore_children, ig);
-    ig->hide_children = FALSE;
-    gtk_widget_queue_resize (GTK_WIDGET (data));
+    g_idle_add (idle_restore, data);
 }
 
 void panel_icon_grid_force_redraw (PanelIconGrid * ig)

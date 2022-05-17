@@ -120,6 +120,7 @@ static gboolean do_redraw (gpointer data)
 static void redraw (TrayPlugin *tr)
 {
 #if GTK_CHECK_VERSION (3, 0, 0)
+    tr->redraw_called = 0;
     g_idle_add (do_redraw, tr);
 #endif
 }
