@@ -652,7 +652,14 @@ static gboolean check_user_warnings (gpointer data)
 
 static gboolean delay_check (gpointer data)
 {
-    g_timeout_add (2000, check_user_warnings, data);
+    /* It seems that once mutter has started, it cannot correctly display windows with
+     * client-side decorations immediately. The reason this has never been observed is
+     * because the only windows which use CSD are tooltips, and they have an inbuilt
+     * delay so are never shown for at least 0.5 seconds after the panel has started,
+     * giving time for mutter to sort itself out. So we implement a similar-length delay
+     * here before calling lxpanel_notify to make its CSD windows work properly...
+     */
+    g_timeout_add (1000, check_user_warnings, data);
     return FALSE;
 }
 

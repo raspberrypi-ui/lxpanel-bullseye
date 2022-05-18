@@ -691,7 +691,7 @@ static GtkWidget *tray_constructor(LXPanel *panel, config_setting_t *settings)
     panel_icon_grid_set_aspect_width(PANEL_ICON_GRID(p), TRUE);
 
 #if GTK_CHECK_VERSION(3, 0, 0)
-    tr->redraw_called = -1;
+    tr->redraw_called = 0;
     g_signal_connect (p, "size-allocate", G_CALLBACK (on_size_alloc), tr);
     g_idle_add (init_redraw, tr);
 #endif
