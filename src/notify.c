@@ -37,6 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SPACING 5
 
 #define INIT_MUTE 2500
+#define INTERVAL_MS 500
 
 typedef struct {
     GtkWidget *popup;               /* Popup message window*/
@@ -44,6 +45,7 @@ typedef struct {
     unsigned int seq;               /* Sequence number */
     guint hash;                     /* Hash of message string */
     char *message;
+    gboolean shown;
 } NotifyWindow;
 
 
@@ -53,7 +55,7 @@ typedef struct {
 
 static GList *nwins = NULL;         /* List of current notifications */
 static unsigned int nseq = 0;       /* Sequence number for notifications */
-static gboolean notif_muted;        /* Notifications not shown briefly during startup */
+static gint interval_timer = 0;     /* Used to show windows one at a time */
 
 /*----------------------------------------------------------------------------*/
 /* Function prototypes */
@@ -160,16 +162,17 @@ static gboolean hide_message (NotifyWindow *nw)
     GList *item;
     int w, h;
 
-    if (!notif_muted)
+    // shuffle notifications below up
+    if (nw->popup)
     {
-        // shuffle notifications below up
         item = g_list_find (nwins, nw);
         gtk_window_get_size (GTK_WINDOW (nw->popup), &w, &h);
         update_positions (item->next, - (h + SPACING));
-
-        if (nw->hide_timer) g_source_remove (nw->hide_timer);
-        if (nw->popup) gtk_widget_destroy (nw->popup);
+        gtk_widget_destroy (nw->popup);
     }
+
+    if (nw->hide_timer) g_source_remove (nw->hide_timer);
+
     nwins = g_list_remove (nwins, nw);
     g_free (nw->message);
     g_free (nw);
@@ -199,30 +202,40 @@ static gboolean window_click (GtkWidget *widget, GdkEventButton *event, NotifyWi
     return FALSE;
 }
 
-/* Unmute handler at end of initial mute period */
+/* Timer handler to show next window */
 
-static gboolean notify_unmute (LXPanel *panel)
+static gboolean show_next (LXPanel *panel)
 {
     NotifyWindow *nw;
     GList *item;
     int w, h;
 
-    // clear flag
-    notif_muted = FALSE;
-
-    // loop through notifications in the list
-    for (item = g_list_last (nwins); item != NULL; item = item->prev)
+    if (nwins)
     {
-        nw = (NotifyWindow *) item->data;
+        // loop through notifications in the list, finding the oldest which is unshown
+        for (item = g_list_last (nwins); item != NULL; item = item->prev)
+        {
+            nw = (NotifyWindow *) item->data;
 
-        // show the window
-        show_message (panel, nw, nw->message);
+            // is this one shown?
+            if (nw->shown) continue;
+            nw->shown = TRUE;
 
-        // shuffle existing notifications down
-        gtk_window_get_size (GTK_WINDOW (nw->popup), &w, &h);
-        update_positions (item->next, h + SPACING);
+            // if not, show the window
+            show_message (panel, nw, nw->message);
+
+            // shuffle existing notifications down
+            gtk_window_get_size (GTK_WINDOW (nw->popup), &w, &h);
+            update_positions (item->next, h + SPACING);
+
+            // if there is a newer notification, re-call the timer else stop
+            if (item->prev) interval_timer = g_timeout_add (INTERVAL_MS, (GSourceFunc) show_next, panel);
+            else interval_timer = 0;
+            return FALSE;
+        }
     }
 
+    interval_timer = 0;
     return FALSE;
 }
 
@@ -232,11 +245,8 @@ static gboolean notify_unmute (LXPanel *panel)
 
 void lxpanel_notify_init (LXPanel *panel)
 {
-    // set notify mute flag
-    notif_muted = TRUE;
-
-    // set timer to unmute
-    g_timeout_add (INIT_MUTE, (GSourceFunc) notify_unmute, panel);
+    // set timer for initial display of notifications
+    interval_timer = g_timeout_add (INIT_MUTE, (GSourceFunc) show_next, panel);
 }
 
 unsigned int lxpanel_notify (LXPanel *panel, char *message)
@@ -268,16 +278,15 @@ unsigned int lxpanel_notify (LXPanel *panel, char *message)
     if (nseq == -1) nseq++;     // use -1 for invalid sequence code
     nw->seq = nseq;
     nw->hash = hash;
+    nw->popup = NULL;
     nw->message = g_strdup (message);
+    nw->shown = FALSE;
 
-    if (!notif_muted)
+    // if the timer isn't running, show the notification immediately and start the timer
+    if (interval_timer == 0)
     {
-        // show the window
-        show_message (panel, nw, message);
-
-        // shuffle existing notifications down
-        gtk_window_get_size (GTK_WINDOW (nw->popup), &w, &h);
-        update_positions (nwins->next, h + SPACING);
+        show_next (panel);
+        interval_timer = g_timeout_add (INTERVAL_MS, (GSourceFunc) show_next, panel);
     }
 
     return nseq;
