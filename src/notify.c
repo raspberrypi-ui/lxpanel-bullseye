@@ -36,11 +36,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define TEXT_WIDTH 40
 #define SPACING 5
 
+#define INIT_MUTE 2500
+
 typedef struct {
     GtkWidget *popup;               /* Popup message window*/
     guint hide_timer;               /* Timer to hide message window */
     unsigned int seq;               /* Sequence number */
     guint hash;                     /* Hash of message string */
+    char *message;
 } NotifyWindow;
 
 
@@ -50,6 +53,7 @@ typedef struct {
 
 static GList *nwins = NULL;         /* List of current notifications */
 static unsigned int nseq = 0;       /* Sequence number for notifications */
+static gboolean notif_muted;        /* Notifications not shown briefly during startup */
 
 /*----------------------------------------------------------------------------*/
 /* Function prototypes */
@@ -59,6 +63,7 @@ static void show_message (LXPanel *panel, NotifyWindow *nw, char *str);
 static gboolean hide_message (NotifyWindow *nw);
 static void update_positions (GList *item, int offset);
 static gboolean window_click (GtkWidget *widget, GdkEventButton *event, NotifyWindow *nw);
+static gboolean notify_unmute (LXPanel *panel);
 
 /*----------------------------------------------------------------------------*/
 /* Private functions */
@@ -155,14 +160,18 @@ static gboolean hide_message (NotifyWindow *nw)
     GList *item;
     int w, h;
 
-    // shuffle notifications below up
-    item = g_list_find (nwins, nw);
-    gtk_window_get_size (GTK_WINDOW (nw->popup), &w, &h);
-    update_positions (item->next, - (h + SPACING));
+    if (!notif_muted)
+    {
+        // shuffle notifications below up
+        item = g_list_find (nwins, nw);
+        gtk_window_get_size (GTK_WINDOW (nw->popup), &w, &h);
+        update_positions (item->next, - (h + SPACING));
 
-    if (nw->hide_timer) g_source_remove (nw->hide_timer);
-    if (nw->popup) gtk_widget_destroy (nw->popup);
+        if (nw->hide_timer) g_source_remove (nw->hide_timer);
+        if (nw->popup) gtk_widget_destroy (nw->popup);
+    }
     nwins = g_list_remove (nwins, nw);
+    g_free (nw->message);
     g_free (nw);
     return FALSE;
 }
@@ -190,9 +199,45 @@ static gboolean window_click (GtkWidget *widget, GdkEventButton *event, NotifyWi
     return FALSE;
 }
 
+/* Unmute handler at end of initial mute period */
+
+static gboolean notify_unmute (LXPanel *panel)
+{
+    NotifyWindow *nw;
+    GList *item;
+    int w, h;
+
+    // clear flag
+    notif_muted = FALSE;
+
+    // loop through notifications in the list
+    for (item = g_list_last (nwins); item != NULL; item = item->prev)
+    {
+        nw = (NotifyWindow *) item->data;
+
+        // show the window
+        show_message (panel, nw, nw->message);
+
+        // shuffle existing notifications down
+        gtk_window_get_size (GTK_WINDOW (nw->popup), &w, &h);
+        update_positions (item->next, h + SPACING);
+    }
+
+    return FALSE;
+}
+
 /*----------------------------------------------------------------------------*/
 /* Public API */
 /*----------------------------------------------------------------------------*/
+
+void lxpanel_notify_init (LXPanel *panel)
+{
+    // set notify mute flag
+    notif_muted = TRUE;
+
+    // set timer to unmute
+    g_timeout_add (INIT_MUTE, (GSourceFunc) notify_unmute, panel);
+}
 
 unsigned int lxpanel_notify (LXPanel *panel, char *message)
 {
@@ -223,13 +268,17 @@ unsigned int lxpanel_notify (LXPanel *panel, char *message)
     if (nseq == -1) nseq++;     // use -1 for invalid sequence code
     nw->seq = nseq;
     nw->hash = hash;
+    nw->message = g_strdup (message);
 
-    // show the window
-    show_message (panel, nw, message);
+    if (!notif_muted)
+    {
+        // show the window
+        show_message (panel, nw, message);
 
-    // shuffle existing notifications down
-    gtk_window_get_size (GTK_WINDOW (nw->popup), &w, &h);
-    update_positions (nwins->next, h + SPACING);
+        // shuffle existing notifications down
+        gtk_window_get_size (GTK_WINDOW (nw->popup), &w, &h);
+        update_positions (nwins->next, h + SPACING);
+    }
 
     return nseq;
 }

@@ -650,19 +650,6 @@ static gboolean check_user_warnings (gpointer data)
     return FALSE;
 }
 
-static gboolean delay_check (gpointer data)
-{
-    /* It seems that once mutter has started, it cannot correctly display windows with
-     * client-side decorations immediately. The reason this has never been observed is
-     * because the only windows which use CSD are tooltips, and they have an inbuilt
-     * delay so are never shown for at least 0.5 seconds after the panel has started,
-     * giving time for mutter to sort itself out. So we implement a similar-length delay
-     * here before calling lxpanel_notify to make its CSD windows work properly...
-     */
-    g_timeout_add (1000, check_user_warnings, data);
-    return FALSE;
-}
-
 static void _start_panels_from_dir(const char *panel_dir, int fallback)
 {
     GDir* dir = g_dir_open( panel_dir, 0, NULL );
@@ -844,7 +831,8 @@ int main(int argc, char *argv[], char *env[])
     if( G_UNLIKELY( ! start_all_panels() ) )
         g_warning( "Config files are not found.\n" );
 
-    g_idle_add (delay_check, first_panel);
+    lxpanel_notify_init (first_panel);
+    g_idle_add (check_user_warnings, first_panel);
 /*
  * FIXME: configure??
     if (config)
