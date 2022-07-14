@@ -398,4 +398,8 @@ extern void lxpanel_notify_clear (unsigned int seq);
 
 G_END_DECLS
 
+#undef _
+#define _(str) dgettext(GETTEXT_PACKAGE,str)
+
+
 #endif /* __PLUGIN_H__ */
