@@ -28,7 +28,10 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "plugin.h"
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "misc.h"
 
 #include <libfm/fm-gtk.h>
@@ -41,6 +44,7 @@
 #include <string.h>
 #include <glib/gi18n.h>
 
+#include "plugin.h"
 #include "dbg.h"
 
 #define DEFAULT_TIP_FORMAT    "%A %x"

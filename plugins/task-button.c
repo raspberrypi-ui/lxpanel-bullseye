@@ -37,8 +37,6 @@
 #include <config.h>
 #endif
 
-#include "task-button.h"
-
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
@@ -51,6 +49,8 @@
 #include "misc.h"
 #include "icon.xpm"
 #include "gtk-compat.h"
+
+#include "task-button.h"
 
 #define ALL_WORKSPACES       -1
 

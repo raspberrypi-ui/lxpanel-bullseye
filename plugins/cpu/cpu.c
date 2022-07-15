@@ -32,6 +32,10 @@
  */
 /*A little bug fixed by Mykola <mykola@2ka.mipt.ru>:) */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <string.h>
 #include <sys/time.h>
 #include <time.h>

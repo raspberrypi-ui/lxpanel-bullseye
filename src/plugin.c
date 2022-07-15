@@ -23,10 +23,8 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#include <config.h>
 #endif
-
-#include "private.h"
 
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <gdk/gdk.h>
@@ -40,6 +38,7 @@
 #include <libfm/fm-gtk.h>
 
 //#define DEBUG
+#include "private.h"
 #include "dbg.h"
 #include "gtk-compat.h"
 

@@ -32,12 +32,11 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#include <config.h>
 #endif
 
 #define __LXPANEL_INTERNALS__
 
-#include "private.h"
 #include "misc.h"
 #include <stdlib.h>
 #include <sys/types.h>
@@ -47,6 +46,7 @@
 #include <glib/gi18n.h>
 #include <libfm/fm-gtk.h>
 
+#include "private.h"
 #include "dbg.h"
 
 enum{

@@ -27,7 +27,6 @@
 #include <config.h>
 #endif
 
-#include "plugin.h"
 #include "misc.h"
 
 #include <gtk/gtk.h>
@@ -39,6 +38,7 @@
 
 #include <X11/XKBlib.h>
 
+#include "plugin.h"
 #include "icon-grid.h"
 
 static const char * on_icons_theme[] = {

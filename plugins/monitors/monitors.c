@@ -73,6 +73,10 @@
  *     border of BORDER_SIZE pixels around it.
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <stdlib.h>
 #include <glib/gi18n.h>
 #include <errno.h>

@@ -27,12 +27,12 @@
 #include "providers.h"
 #include "openweathermap.h"
 
-#include "plugin.h"
-
 #include <glib.h>
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
 #include <stdlib.h>
+
+#include "plugin.h"
 
 static provider_callback_info *providersList[] = {
 /*  &YahooCallbacks, -- does not work anymore */

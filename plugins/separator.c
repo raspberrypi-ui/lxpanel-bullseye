@@ -23,9 +23,9 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "plugin.h"
-
 #include <glib/gi18n.h>
+
+#include "plugin.h"
 
 /* Plugin constructor. */
 static GtkWidget *separator_constructor(LXPanel *panel, config_setting_t *settings)
