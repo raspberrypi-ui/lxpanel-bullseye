@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <unistd.h>
 
 static Display* dpy;
 
@@ -160,8 +161,7 @@ int main( int argc, char** argv )
     if (cmd == LXPANEL_CMD_NOTIFY)
     {
         char tmp[16] = "/tmp/nmsgXXXXXX";
-        int i = 2;
-        FILE *fp;
+        int i = 2, filedes;
         if (argc > 3 && strncmp(argv[2], "--panel=", 8) == 0)
         {
             int monitor;
@@ -172,16 +172,16 @@ int main( int argc, char** argv )
         }
         else
             target = (EDGE_NONE << 4) + 0; /* edge: none, monitor: none */
+
+        if (argc <= i)
+        {
+            printf( usage );
+            return 1;
+        }
+
         ev.xclient.data.b[1] = target;
-
-        /* need to use mktemp here to create a temp file for the text - yes, I know mktemp is a security risk,
-         * but the worst anyone can do here is to put a rude message in a notification box, so I'm not that
-         * worried... */
-
-        mktemp (tmp);
-        fp = fopen (tmp, "wb");
-        fprintf (fp, "%s", argv[i]);
-        fclose (fp);
+        filedes = mkstemp (tmp);
+        write (filedes, argv[i], strlen (argv[i]));
         snprintf (&ev.xclient.data.b[2], 16, "%s", tmp);
     }
 

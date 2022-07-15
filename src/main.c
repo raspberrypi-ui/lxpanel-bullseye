@@ -425,6 +425,7 @@ static void process_client_msg ( XClientMessageEvent* ev )
                 fp = fopen (&ev->data.b[2], "rb");
                 getdelim (&buf, &siz, 0, fp);
                 fclose (fp);
+                remove (&ev->data.b[2]);
                 lxpanel_notify (p, buf);
                 free (buf);
             } while(0);
