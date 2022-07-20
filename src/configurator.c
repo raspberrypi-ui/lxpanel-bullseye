@@ -767,6 +767,7 @@ static void on_add_plugin_response( GtkDialog* dlg,
                 gboolean expand;
 
                 panel_config_save(p->priv);
+                _panel_set_panel_configuration_changed (p);
 
                 //plugin_widget_set_background(pl, p);
                 gtk_container_child_get(GTK_CONTAINER(p->priv->box), pl, "expand", &expand, NULL);
