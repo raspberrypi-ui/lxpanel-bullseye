@@ -423,11 +423,16 @@ static void process_client_msg ( XClientMessageEvent* ev )
 
                 buf = NULL;
                 fp = fopen (&ev->data.b[2], "rb");
-                getdelim (&buf, &siz, 0, fp);
-                fclose (fp);
+                if (fp)
+                {
+                    if (getdelim (&buf, &siz, 0, fp) > 0)
+                    {
+                        lxpanel_notify (p, buf);
+                        free (buf);
+                    }
+                    fclose (fp);
+                }
                 remove (&ev->data.b[2]);
-                lxpanel_notify (p, buf);
-                free (buf);
             } while(0);
             break;
     }
