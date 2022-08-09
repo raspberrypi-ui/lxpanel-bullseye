@@ -42,7 +42,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 typedef struct {
     GtkWidget *popup;               /* Popup message window*/
     guint hide_timer;               /* Timer to hide message window */
-    unsigned int seq;               /* Sequence number */
+    int seq;                        /* Sequence number */
     guint hash;                     /* Hash of message string */
     char *message;
     gboolean shown;
@@ -54,7 +54,7 @@ typedef struct {
 /*----------------------------------------------------------------------------*/
 
 static GList *nwins = NULL;         /* List of current notifications */
-static unsigned int nseq = 0;       /* Sequence number for notifications */
+static int nseq = 0;                /* Sequence number for notifications */
 static gint interval_timer = 0;     /* Used to show windows one at a time */
 
 /*----------------------------------------------------------------------------*/
@@ -249,7 +249,7 @@ void lxpanel_notify_init (LXPanel *panel)
     interval_timer = g_timeout_add (INIT_MUTE, (GSourceFunc) show_next, panel);
 }
 
-unsigned int lxpanel_notify (LXPanel *panel, char *message)
+int lxpanel_notify (LXPanel *panel, char *message)
 {
     NotifyWindow *nw;
     GList *item;
@@ -292,7 +292,7 @@ unsigned int lxpanel_notify (LXPanel *panel, char *message)
     return nseq;
 }
 
-void lxpanel_notify_clear (unsigned int seq)
+void lxpanel_notify_clear (int seq)
 {
     NotifyWindow *nw;
     GList *item;

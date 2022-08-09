@@ -393,8 +393,8 @@ extern void lxpanel_plugin_append_menu_icon (GtkWidget *item, GtkWidget *image);
 extern const char *lxpanel_plugin_get_menu_label (GtkWidget *item);
 
 extern void lxpanel_notify_init (LXPanel *panel);
-extern unsigned int lxpanel_notify (LXPanel *panel, char *message);
-extern void lxpanel_notify_clear (unsigned int seq);
+extern int lxpanel_notify (LXPanel *panel, char *message);
+extern void lxpanel_notify_clear (int seq);
 
 G_END_DECLS
 
