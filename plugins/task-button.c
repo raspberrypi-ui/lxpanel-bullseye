@@ -270,6 +270,7 @@ static TaskDetails *task_details_lookup(TaskButton *task, Window win)
 }
 
 /* Position-calculation callback for grouped-task and window-management popup menu. */
+#if !GTK_CHECK_VERSION(3, 0, 0)
 static void taskbar_popup_set_position(GtkMenu * menu, gint * px, gint * py, gboolean * push_in, gpointer data)
 {
     TaskButton * tb = (TaskButton *) data;
@@ -278,6 +279,7 @@ static void taskbar_popup_set_position(GtkMenu * menu, gint * px, gint * py, gbo
     lxpanel_plugin_popup_set_position_helper(tb->panel, data, GTK_WIDGET(menu), px, py);
     *push_in = TRUE;
 }
+#endif
 
 static inline TaskButton *get_menu_task_button(GtkWidget *taskbar)
 {

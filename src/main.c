@@ -734,7 +734,9 @@ int main(int argc, char *argv[], char *env[])
 {
     int i;
     const char* desktop_name;
+#if !GTK_CHECK_VERSION(3, 0, 0)
     char *file;
+#endif
 
     setlocale(LC_CTYPE, "");
 

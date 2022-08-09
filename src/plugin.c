@@ -68,7 +68,9 @@ static inline const LXPanelPluginInit *_find_plugin(const char *name)
 
 static GtkWidget *_old_plugin_config(LXPanel *panel, GtkWidget *instance)
 {
+#ifndef G_DISABLE_CHECKS
     const LXPanelPluginInit *init = PLUGIN_CLASS(instance);
+#endif
     Plugin * plugin;
 
     g_return_val_if_fail(init != NULL && init->new_instance == NULL, NULL);
@@ -80,7 +82,9 @@ static GtkWidget *_old_plugin_config(LXPanel *panel, GtkWidget *instance)
 
 static void _old_plugin_reconfigure(LXPanel *panel, GtkWidget *instance)
 {
+#ifndef G_DISABLE_CHECKS
     const LXPanelPluginInit *init = PLUGIN_CLASS(instance);
+#endif
     Plugin * plugin;
 
     g_return_if_fail(init != NULL && init->new_instance == NULL);

@@ -65,7 +65,6 @@ static void show_message (LXPanel *panel, NotifyWindow *nw, char *str);
 static gboolean hide_message (NotifyWindow *nw);
 static void update_positions (GList *item, int offset);
 static gboolean window_click (GtkWidget *widget, GdkEventButton *event, NotifyWindow *nw);
-static gboolean notify_unmute (LXPanel *panel);
 
 /*----------------------------------------------------------------------------*/
 /* Private functions */
@@ -103,7 +102,6 @@ static void notify_position_helper (LXPanel *p, GtkWidget *popup, gint *px, gint
 static void show_message (LXPanel *panel, NotifyWindow *nw, char *str)
 {
     GtkWidget *box, *item;
-    GList *plugins;
     gint x, y;
     char *fmt, *cptr;
 
@@ -253,7 +251,6 @@ int lxpanel_notify (LXPanel *panel, char *message)
 {
     NotifyWindow *nw;
     GList *item;
-    int w, h;
 
     // check for notifications being disabled
     if (!panel->priv->notifications) return 0;

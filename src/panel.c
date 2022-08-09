@@ -948,13 +948,13 @@ static void paint_root_pixmap(LXPanel *panel, cairo_t *cr)
 
 static void _panel_determine_background_pixmap(LXPanel * panel)
 {
-#if GTK_CHECK_VERSION(3, 0, 0)
-    cairo_pattern_t *pattern;
-#else
+#if !GTK_CHECK_VERSION(3, 0, 0)
     GdkPixmap * pixmap = NULL;
 #endif
     GtkWidget * widget = GTK_WIDGET(panel);
+#if !GTK_CHECK_VERSION(3, 0, 0)
     GdkWindow * window = gtk_widget_get_window(widget);
+#endif
     Panel * p = panel->priv;
     cairo_t *cr;
     gint x = 0, y = 0;
@@ -1605,7 +1605,7 @@ void panel_apply_icon( GtkWindow *w )
 
 GtkMenu* lxpanel_get_plugin_menu( LXPanel* panel, GtkWidget* plugin, gboolean use_sub_menu )
 {
-    GtkWidget  *menu_item, *img;
+    GtkWidget  *menu_item;
     GtkMenu *ret,*menu;
     const LXPanelPluginInit *init;
     char* tmp;
@@ -1622,7 +1622,7 @@ GtkMenu* lxpanel_get_plugin_menu( LXPanel* panel, GtkWidget* plugin, gboolean us
         menu_item = gtk_menu_item_new_with_label( tmp );
         g_free( tmp );
 #else
-        img = gtk_image_new_from_stock( GTK_STOCK_PREFERENCES, GTK_ICON_SIZE_MENU );
+        GtkWidget *img = gtk_image_new_from_stock( GTK_STOCK_PREFERENCES, GTK_ICON_SIZE_MENU );
         tmp = g_strdup_printf(_("%s Settings"),
                               g_dgettext(init->gettext_package, init->name));
         menu_item = gtk_image_menu_item_new_with_label( tmp );

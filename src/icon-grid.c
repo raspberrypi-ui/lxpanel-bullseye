@@ -390,8 +390,6 @@ static void panel_icon_grid_size_request(GtkWidget *widget,
                                          GtkRequisition *requisition)
 {
     PanelIconGrid *ig = PANEL_ICON_GRID(widget);
-    gint old_rows = ig->rows;
-    gint old_columns = ig->columns;
 
     panel_icon_grid_calculate_size(ig, requisition);
 }
@@ -914,7 +912,9 @@ static void panel_icon_grid_realize(GtkWidget *widget)
 {
     PanelIconGrid *ig = PANEL_ICON_GRID(widget);
     GdkWindow *window;
+#if !GTK_CHECK_VERSION(3, 0, 0)
     GtkStyle *style;
+#endif
     GtkAllocation allocation;
     GdkWindowAttr attributes;
     guint border = gtk_container_get_border_width(GTK_CONTAINER(widget));

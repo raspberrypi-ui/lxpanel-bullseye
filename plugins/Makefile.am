@@ -5,7 +5,8 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir) \
 	-I$(top_srcdir)/src \
 	$(PACKAGE_CFLAGS) \
-	$(G_CAST_CHECKS)
+	$(G_CAST_CHECKS) \
+	-Wall
 
 AM_LDFLAGS = \
 	-module -avoid-version -shared -export-dynamic \

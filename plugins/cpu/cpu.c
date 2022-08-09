@@ -80,7 +80,6 @@ typedef struct {
 
 static void redraw_pixmap(CPUPlugin * c);
 static gboolean cpu_update(CPUPlugin * c);
-static gboolean configure_event(GtkWidget * widget, GdkEventConfigure * event, CPUPlugin * c);
 #if !GTK_CHECK_VERSION(3, 0, 0)
 static gboolean expose_event(GtkWidget * widget, GdkEventExpose * event, CPUPlugin * c);
 #else
@@ -186,7 +185,7 @@ static gboolean cpu_update(CPUPlugin * c)
         if (stat == NULL) return TRUE;
         fgets (buffer, 256, stat);
         fclose (stat);
-        if (!buffer || !strlen (buffer)) return TRUE;
+        if (!strlen (buffer)) return TRUE;
         int fscanf_result = sscanf(buffer, "cpu %llu %llu %llu %llu", &cpu.u, &cpu.n, &cpu.s, &cpu.i);
         if (fscanf_result == 4)
         {
@@ -403,6 +402,7 @@ static gboolean cpu_apply_configuration (gpointer user_data)
     sprintf (colbuf, "%s", gdk_color_to_string (&c->background_color));
 #endif
     config_group_set_string (c->settings, "Background", colbuf);
+    return FALSE;
 }
 
 /* Callback when the configuration dialog is to be shown. */

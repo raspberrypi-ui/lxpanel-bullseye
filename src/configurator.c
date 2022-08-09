@@ -84,7 +84,9 @@ static char* logout_cmd = NULL;
 
 /* GtkColotButton expects a number between 0 and 65535, but p->alpha has range
  * 0 to 255, and (2^(2n) - 1) / (2^n - 1) = 2^n + 1 = 257, with n = 8. */
+#if !GTK_CHECK_VERSION(3, 0, 0)
 static guint16 const alpha_scale_factor = 257;
+#endif
 
 void panel_config_save(Panel *p);
 
@@ -372,6 +374,7 @@ static void set_width_type( GtkWidget *item, LXPanel* panel )
 
 /* FIXME: heighttype and spacing and RoundCorners */
 
+#if 0
 static void transparency_toggle( GtkWidget *b, Panel* p)
 {
     GtkWidget* tr = (GtkWidget*)g_object_get_data(G_OBJECT(b), "tint_clr");
@@ -535,6 +538,7 @@ on_use_font_size_toggled(GtkToggleButton* btn, LXPanel* panel)
     UPDATE_GLOBAL_INT(p, "usefontsize", p->usefontsize);
     _panel_emit_font_changed(panel);
 }
+#endif
 
 
 static void
@@ -819,7 +823,9 @@ static void on_add_plugin( GtkButton* btn, GtkTreeView* _view )
     GHashTableIter iter;
     gpointer key, val;
 
+#if !GTK_CHECK_VERSION(3, 0, 0)
     LXPanel* p = (LXPanel*) g_object_get_data( G_OBJECT(_view), "panel" );
+#endif
 
     classes = lxpanel_get_all_types();
 
@@ -1135,7 +1141,11 @@ void panel_configure( LXPanel* panel, int sel_page )
 {
     Panel *p = panel->priv;
     GtkBuilder* builder;
+#if GTK_CHECK_VERSION(3, 0, 0)
+    GtkWidget *w;
+#else
     GtkWidget *w, *w2, *tint_clr;
+#endif
     FmMimeType *mt;
     GtkComboBox *fm;
 #if GTK_CHECK_VERSION(3, 0, 0)
@@ -1210,7 +1220,7 @@ void panel_configure( LXPanel* panel, int sel_page )
         GtkTreeIter it;
 #endif
         gint i;
-        char itext[4];
+        char itext[12];
 
         /* create a new cell renderer and bind cell data function to it */
         cell = gtk_cell_renderer_text_new();
@@ -1577,7 +1587,7 @@ static void on_radio_changed( GtkRadioButton* btn, gpointer user_data )
 
     GSList *group = gtk_radio_button_get_group (btn);
     GtkRadioButton *tbtn;
-    int nbtn = 0, sbtn;
+    int nbtn = 0, sbtn = -1;
     while (group)
     {
         tbtn = group->data;
@@ -1666,8 +1676,6 @@ static void generic_config_dlg_response(GtkWidget * dlg, int response, Panel * p
 
 void _panel_show_config_dialog(LXPanel *panel, GtkWidget *p, GtkWidget *dlg)
 {
-    gint x, y;
-
     /* If there is already a plugin configuration dialog open, close it.
      * Then record this one in case the panel or plugin is deleted. */
     if (panel->priv->plugin_pref_dialog != NULL)
@@ -1707,7 +1715,7 @@ static GtkWidget *_lxpanel_generic_config_dlg(const char *title, Panel *p,
     gtk_box_set_spacing( dlg_vbox, 4 );
 
     int rb_group = 0;
-    GtkWidget *lastbtn;
+    GtkWidget *lastbtn = NULL;
     while( name )
     {
         GtkWidget* entry = NULL;
@@ -1773,7 +1781,7 @@ static GtkWidget *_lxpanel_generic_config_dlg(const char *title, Panel *p,
                 }
                 break;
             case CONF_TYPE_RBUTTON:
-                if (!rb_group)
+                if (!lastbtn)
                 {
                     entry = gtk_radio_button_new_with_label (NULL, name);
                     g_signal_connect (entry, "toggled", G_CALLBACK(on_radio_changed), val);

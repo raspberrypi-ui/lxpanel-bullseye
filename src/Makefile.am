@@ -11,7 +11,8 @@ lxpanel_CPPFLAGS = \
 	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\" \
 	$(PACKAGE_CFLAGS) \
 	$(KEYBINDER_CFLAGS) \
-	$(G_CAST_CHECKS)
+	$(G_CAST_CHECKS) \
+	-Wall
 
 BUILTIN_PLUGINS = $(top_builddir)/plugins/libbuiltin_plugins.a
 

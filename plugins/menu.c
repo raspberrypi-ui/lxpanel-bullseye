@@ -157,6 +157,7 @@ run_command(GtkWidget *widget, void (*cmd)(void))
     RET();
 }
 
+#if !GTK_CHECK_VERSION(3, 0, 0)
 static void
 menu_pos(GtkMenu *menu, gint *x, gint *y, gboolean *push_in, GtkWidget *widget)
 {
@@ -166,6 +167,7 @@ menu_pos(GtkMenu *menu, gint *x, gint *y, gboolean *push_in, GtkWidget *widget)
     lxpanel_plugin_popup_set_position_helper(m->panel, widget, GTK_WIDGET(menu), x, y);
     *push_in = TRUE;
 }
+#endif
 
 static void on_menu_item( GtkMenuItem* mi, menup* m )
 {
@@ -1062,7 +1064,7 @@ menu_constructor(LXPanel *panel, config_setting_t *settings)
 {
     menup *m;
     config_setting_t *s;
-    int iw, ih;
+    int iw;
 
 #ifdef ENABLE_NLS
     setlocale (LC_ALL, "");

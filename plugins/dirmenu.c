@@ -110,6 +110,7 @@ static void dirmenu_menu_selection_done(GtkWidget * menu, DirMenuPlugin * dm)
 }
 
 /* Position-calculation callback for popup menu. */
+#if !GTK_CHECK_VERSION(3, 0, 0)
 static void dirmenu_popup_set_position(GtkWidget * menu, gint * px, gint * py, gboolean * push_in, GtkWidget * p)
 {
     DirMenuPlugin * dm = lxpanel_plugin_get_data(p);
@@ -118,6 +119,7 @@ static void dirmenu_popup_set_position(GtkWidget * menu, gint * px, gint * py, g
     lxpanel_plugin_popup_set_position_helper(dm->panel, p, menu, px, py);
     *push_in = TRUE;
 }
+#endif
 
 /* Create a menu populated with all subdirectories. */
 static GtkWidget * dirmenu_create_menu(DirMenuPlugin * dm, const char * path, gboolean open_at_top)

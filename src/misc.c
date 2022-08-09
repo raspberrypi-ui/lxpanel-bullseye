@@ -1255,6 +1255,7 @@ guint32 gcolor2rgb24(GdkColor *color)
 }
 #endif
 
+#if 0
 /* Handler for "enter-notify-event" signal on image that has highlighting requested. */
 static gboolean fb_button_enter(GtkImage * widget, GdkEventCrossing * event)
 {
@@ -1314,6 +1315,7 @@ static gboolean fb_button_leave(GtkImage * widget, GdkEventCrossing * event, gpo
     }
     return TRUE;
 }
+#endif
 
 static void on_font_changed(LXPanel * panel, GtkLabel * lbl)
 {

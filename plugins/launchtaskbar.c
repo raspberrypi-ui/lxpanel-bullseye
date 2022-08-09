@@ -1070,6 +1070,7 @@ static void launchtaskbar_constructor_task(LaunchTaskBarPlugin *ltbp)
 }
 
 /* Override GtkBox bug - it does not always propagate allocation to children */
+#if 0
 static void on_size_allocation(GtkWidget *widget, GtkAllocation *a, LaunchTaskBarPlugin *ltbp)
 {
     if (ltbp->w != a->width || ltbp->h != a->height)
@@ -1090,6 +1091,7 @@ static void on_size_allocation(GtkWidget *widget, GtkAllocation *a, LaunchTaskBa
                                          panel_get_height(ltbp->panel));
     }
 }
+#endif
 
 /* Plugin constructor. */
 static GtkWidget *_launchtaskbar_constructor(LXPanel *panel, config_setting_t *settings,
